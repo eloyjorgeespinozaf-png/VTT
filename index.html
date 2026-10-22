@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visor Táctico de Terreno - VTT</title>
+    <meta name="description" content="Plataforma SIG militar para análisis táctico de terreno, calcos CMOC, marcas de Terreno Clave, Direcciones de Aproximación (AA), Análisis de Orografía, Gestor de Capas, Áreas Tácticas, Áreas de Interés Nombradas (AIN), Matriz de Eventos y Líneas Fase de Tiempo (LFT), Blancos de Alto Valor (BAV), Cálculo de Marcha, Análisis CARVER, Matriz de Efectos CC.MM. en Operaciones, Tablero de Potencia Relativa de Combate (PRC) y Despliegue de Fuerzas de Maniobra." />
+    <meta property="og:title" content="Visor Táctico de Terreno - VTT" />
+    <meta property="og:description" content="Plataforma SIG militar para análisis táctico de terreno, calcos CMOC, marcas de Terreno Clave, Direcciones de Aproximación (AA), Análisis de Orografía, Gestor de Capas, Áreas Tácticas, Áreas de Interés Nombradas (AIN), Matriz de Eventos y Líneas Fase de Tiempo (LFT), Blancos de Alto Valor (BAV), Cálculo de Marcha, Análisis CARVER, Matriz de Efectos CC.MM. en Operaciones, Tablero de Potencia Relativa de Combate (PRC) y Despliegue de Fuerzas de Maniobra." />
+    <meta name="theme-color" content="#212121" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="VTT" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Registro de Service Worker para PWA (Fase 19)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('[PWA-VTT] Service Worker registrado con éxito:', registration.scope);
+            })
+            .catch((error) => {
+              console.error('[PWA-VTT] Fallo al registrar el Service Worker:', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
+

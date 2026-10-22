@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor Táctico de Terreno - VTT (Fase 10: Análisis CARVER BAV)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #121613;
+      color: #d6dfd5;
+    }
+
+    .vtt-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 1. Panel Lateral Izquierdo: 25% del ancho */
+    .sidebar {
+      width: 25%;
+      min-width: 280px;
+      max-width: 420px;
+      height: 100vh;
+      background-color: #161b17;
+      border-right: 1px solid #2e3a2f;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #2e3a2f;
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #e4eee3;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .sidebar-header p {
+      font-size: 11px;
+      color: #839482;
+      margin-top: 4px;
+      font-family: "Courier New", Courier, monospace;
+      text-transform: uppercase;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Módulos / Tarjetas Tácticas */
+    .module-card {
+      background-color: #1a201b;
+      border: 1px solid #2e3a2f;
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .module-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2e3a2f;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    .module-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+      letter-spacing: 0.04em;
+      color: #a7bba5;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .module-badge {
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      background-color: #121613;
+      border: 1px solid #2e3a2f;
+      color: #8fa38e;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+
+    /* Listado de Checkboxes de Capas (Fases 6, 7 y 8) */
+    .layer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background-color: #151c16;
+      border: 1px solid #2d382d;
+      border-radius: 3px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .layer-item:hover {
+      background-color: #1c261e;
+    }
+
+    .layer-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-item input[type="checkbox"] {
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+      accent-color: #81c784;
+    }
+
+    .layer-label {
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      color: #d6dfd5;
+    }
+
+    .layer-count {
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      color: #7e8f7c;
+    }
+
+    /* Controles de Dibujo */
+    .cmoc-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-tactical {
+      width: 100%;
+      padding: 8px 10px;
+      background-color: #151c16;
+      border: 1px solid #313f32;
+      border-radius: 3px;
+      color: #d6dfd5;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-tactical:hover {
+      background-color: #1f2820;
+      border-color: #4a5c4c;
+    }
+
+    .btn-content-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .color-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .color-restringido {
+      background-color: #FFC107;
+      box-shadow: 0 0 4px rgba(255, 193, 7, 0.4);
+    }
+
+    .color-severo {
+      background-color: #F44336;
+      box-shadow: 0 0 4px rgba(244, 67, 54, 0.4);
+    }
+
+    .color-propias {
+      background-color: #2196F3;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.4);
+    }
+
+    .color-empeno {
+      background-color: #FF9800;
+      box-shadow: 0 0 4px rgba(255, 152, 0, 0.4);
+    }
+
+    .color-defendible {
+      background-color: #2196F3;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.4);
+    }
+
+    .color-regla {
+      background-color: #FFFF00;
+      box-shadow: 0 0 4px rgba(255, 255, 0, 0.5);
+    }
+
+    .color-clave-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid purple;
+      color: purple;
+      font-size: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .color-bav {
+      width: 13px;
+      height: 13px;
+      background-color: #D32F2F;
+      border: 1px solid #1A1A1A;
+      transform: rotate(45deg);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Estados Activos */
+    .btn-tactical.active-restringido {
+      background-color: #282e1e;
+      border-color: #FFC107;
+      color: #ffe082;
+    }
+
+    .btn-tactical.active-severo {
+      background-color: #2e1c1e;
+      border-color: #F44336;
+      color: #ffcdd2;
+    }
+
+    .btn-tactical.active-clave {
+      background-color: #26172d;
+      border-color: purple;
+      color: #e1bee7;
+    }
+
+    .btn-tactical.active-aa-propias {
+      background-color: #122131;
+      border-color: #2196F3;
+      color: #90caf9;
+    }
+
+    .btn-tactical.active-aa-enemigo {
+      background-color: #2e1c1e;
+      border-color: #F44336;
+      color: #ffcdd2;
+    }
+
+    .btn-tactical.active-area-empeno {
+      background-color: #332213;
+      border-color: #FF9800;
+      color: #ffcc80;
+    }
+
+    .btn-tactical.active-terreno-defendible {
+      background-color: #132333;
+      border-color: #2196F3;
+      color: #90caf9;
+    }
+
+    .btn-tactical.active-bav {
+      background-color: #331517;
+      border-color: #D32F2F;
+      color: #ff8a80;
+    }
+
+    .btn-tactical.active-orografia {
+      background-color: #172719;
+      border-color: #81c784;
+      color: #c8e6c9;
+    }
+
+    .btn-tactical.active-regla {
+      background-color: #2e2a14;
+      border-color: #FFFF00;
+      color: #fff59d;
+    }
+
+    .tactical-select {
+      width: 100%;
+      background-color: #151c16;
+      border: 1px solid #313f32;
+      border-radius: 3px;
+      color: #e2ede1;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      padding: 6px 8px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .tactical-select:focus {
+      border-color: #81c784;
+    }
+
+    /* Caja de resultado de cálculo de marcha */
+    #resultadoMarcha {
+      background-color: #121613;
+      color: #e0e8df;
+      padding: 10px;
+      border: 1px solid #2d382d;
+      border-radius: 3px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-delete {
+      width: 100%;
+      padding: 8px 10px;
+      background-color: #221819;
+      border: 1px solid #482729;
+      border-radius: 3px;
+      color: #e0b4b6;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      margin-top: 4px;
+    }
+
+    .btn-delete:hover:not(:disabled) {
+      background-color: #2e1d1f;
+      border-color: #633033;
+    }
+
+    .btn-delete:disabled {
+      background-color: #151815;
+      border-color: #252e25;
+      color: #556354;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Helper interactivo de trazo */
+    .drawing-helper {
+      background-color: #131713;
+      border: 1px solid #2e3a2f;
+      border-radius: 3px;
+      padding: 10px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .drawing-helper-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-helper {
+      flex: 1;
+      padding: 5px 8px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-helper-finish {
+      background-color: #1f3020;
+      border-color: #38553a;
+      color: #b9e0ba;
+    }
+
+    .btn-helper-finish:disabled {
+      background-color: #161c16;
+      border-color: #252e25;
+      color: #586957;
+      cursor: not-allowed;
+    }
+
+    .btn-helper-cancel {
+      background-color: #2d1818;
+      border-color: #532c2c;
+      color: #e2a8a8;
+    }
+
+    .sidebar-footer {
+      padding-top: 12px;
+      margin-top: 16px;
+      border-top: 1px solid #2e3a2f;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10px;
+      color: #6b7c6a;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* 2. Visor Geográfico Principal: 75% del ancho */
+    .map-container {
+      width: 75%;
+      height: 100vh;
+      position: relative;
+      background-color: #111411;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      color: #839482;
+      letter-spacing: 0.05em;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <div class="vtt-container">
+    <!-- Panel Lateral Izquierdo (25% del ancho) -->
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <h1>Visor Táctico de Terreno - VTT</h1>
+        <p>Fase 10: Análisis CARVER (BAV) y SIG Militar</p>
+      </header>
+
+      <section class="sidebar-content">
+        <!-- Módulo: Gestor de Capas (CMOC) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Gestor de Capas (CMOC)</span>
+            <span class="module-badge">VISIBILIDAD</span>
+          </div>
+
+          <div id="layer-manager-list">
+            <!-- 1. Terreno Restringido -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-restringido" checked />
+                <span class="color-indicator color-restringido"></span>
+                <span class="layer-label">Terreno Restringido</span>
+              </div>
+              <span id="count-restringido" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 2. Terreno Severamente Restringido -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-severo" checked />
+                <span class="color-indicator color-severo"></span>
+                <span class="layer-label">Terreno Sever. Restringido</span>
+              </div>
+              <span id="count-severo" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 3. Terreno Clave -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-clave" checked />
+                <span class="color-clave-icon">C</span>
+                <span class="layer-label">Terreno Clave</span>
+              </div>
+              <span id="count-clave" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 4. AA Propias -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-aa-propias" checked />
+                <span class="color-indicator color-propias"></span>
+                <span class="layer-label">AA Propias</span>
+              </div>
+              <span id="count-aa-propias" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 5. AA Enemigas -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-aa-enemigo" checked />
+                <span class="color-indicator color-severo"></span>
+                <span class="layer-label">AA Enemigas</span>
+              </div>
+              <span id="count-aa-enemigo" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 6. Área de Empeño (AE) -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-area-empeno" checked />
+                <span class="color-indicator color-empeno"></span>
+                <span class="layer-label">Área de Empeño (AE)</span>
+              </div>
+              <span id="count-area-empeno" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 7. Terreno Defendible -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-terreno-defendible" checked />
+                <span class="color-indicator color-defendible"></span>
+                <span class="layer-label">Terreno Defendible</span>
+              </div>
+              <span id="count-terreno-defendible" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 8. Blancos de Alto Valor (BAV) -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-bav" checked />
+                <span class="color-bav"></span>
+                <span class="layer-label">Blancos de Alto Valor (BAV)</span>
+              </div>
+              <span id="count-bav" class="layer-count">[0]</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Módulo 1: Calcos de Obstáculos Combinados (CMOC) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Calcos de Obstáculos (CMOC)</span>
+            <span id="badge-overlays" class="module-badge">0 CALCOS</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-restringido" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-restringido"></span>
+                <span>Trazar Terreno Restringido</span>
+              </div>
+            </button>
+
+            <button id="btn-severo" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-severo"></span>
+                <span>Trazar Terreno Severamente Restringido</span>
+              </div>
+            </button>
+
+            <button id="btn-eliminar" class="btn-delete" type="button" disabled>
+              Eliminar último calco
+            </button>
+          </div>
+        </div>
+
+        <!-- Módulo 2: Terreno Clave (Fase 3) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Terreno Clave</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-terreno-clave" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-clave-icon">C</span>
+                <span>Marcar Terreno Clave</span>
+              </div>
+            </button>
+
+            <div id="clave-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #ce93d8; background-color: #201323; padding: 6px; border: 1px solid #4a148c; border-radius: 2px;">
+              Haga clic en el mapa para colocar el símbolo de Terreno Clave (C).
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo 3: Direcciones de Aproximación (Fase 4) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Direcciones de Aproximación</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-aa-propias" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-propias"></span>
+                <span>Trazar AA Propias (Azul)</span>
+              </div>
+            </button>
+
+            <button id="btn-aa-enemigo" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-severo"></span>
+                <span>Trazar AA Enemigo (Rojo)</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 7: Áreas Tácticas -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Áreas Tácticas</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-area-empeno" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-empeno"></span>
+                <span>Trazar Área de Empeño (Naranja)</span>
+              </div>
+            </button>
+
+            <button id="btn-terreno-defendible" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-defendible"></span>
+                <span>Trazar Terreno Defendible (Azul)</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 8: Blancos de Alto Valor (BAV) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Blancos de Alto Valor (BAV)</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-bav" style="font-size: 10px; font-family: 'Courier New', monospace; color: #7e8f7c; text-transform: uppercase;">
+                Tipo de Blanco Táctico:
+              </label>
+              <select id="select-bav" class="tactical-select">
+                <option value="c4">Puesto Comando C4</option>
+                <option value="art">Artillería</option>
+                <option value="ada">Defensa Antiaérea ADA</option>
+                <option value="log">Logística/Munición</option>
+              </select>
+            </div>
+
+            <button id="btn-bav" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-bav"></span>
+                <span>Marcar BAV</span>
+              </div>
+            </button>
+
+            <div id="bav-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #ff8a80; background-color: #241214; padding: 6px; border: 1px solid #5c1c1f; border-radius: 2px;">
+              Haga clic en el mapa para colocar el símbolo del Blanco de Alto Valor (BAV) seleccionado.
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 10: Análisis CARVER (BAV) -->
+        <div id="panelCarver" class="module-card" style="display: none;">
+          <div class="module-header-row">
+            <span class="module-title">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#d32f2f;"></span>
+              Análisis CARVER (BAV)
+            </span>
+            <button id="btn-close-carver" type="button" style="background:none; border:none; color:#7e8f7c; cursor:pointer; font-family:'Courier New',monospace; font-size:10px;">✕ Cerrar</button>
+          </div>
+
+          <div class="cmoc-controls">
+            <!-- Select 1: Crítico (C) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-c" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Crítico (C)
+              </label>
+              <select id="select-carver-c" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 2: Accesibilidad (A) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-a" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Accesibilidad (A)
+              </label>
+              <select id="select-carver-a" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 3: Recuperabilidad (R) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-r" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Recuperabilidad (R)
+              </label>
+              <select id="select-carver-r" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 4: Vulnerabilidad (V) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-v" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Vulnerabilidad (V)
+              </label>
+              <select id="select-carver-v" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 5: Efectividad (E) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-e" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Efectividad (E)
+              </label>
+              <select id="select-carver-e" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 6: Reconocible (R) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-rec" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Reconocible (R)
+              </label>
+              <select id="select-carver-rec" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Botón: Calcular Valor Relativo -->
+            <button id="btn-calcular-carver" class="btn-tactical" type="button" style="justify-content: center; font-weight: bold; background-color: #243526; border-color: #415e43; color: #c5e1c4;">
+              Calcular Valor Relativo
+            </button>
+
+            <!-- Elemento div vacío con ID resultadoCarver -->
+            <div id="resultadoCarver" style="padding: 8px; background-color: #121613; border: 1px solid #2d382d; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 12px; min-height: 28px;"></div>
+          </div>
+        </div>
+
+        <!-- Módulo 4: Análisis de Orografía (Fase 5) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Análisis de Orografía</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-orografia" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span style="color:#81c784; font-weight:bold; font-size:12px;">▲</span>
+                <span>Consultar Altitud (Cota)</span>
+              </div>
+            </button>
+
+            <div id="orografia-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #a5d6a7; background-color: #142016; padding: 6px; border: 1px solid #233f26; border-radius: 2px;">
+              Haga clic en el mapa para obtener la cota de altitud y coordenadas del punto.
+            </div>
+
+            <div id="orografia-readout" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; background-color: #121613; padding: 8px; border: 1px solid #2d382d; border-radius: 2px; margin-top: 4px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 9: Cálculo de Marcha (LFT) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Cálculo de Marcha (LFT)</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="selectVelocidad" style="font-size: 10px; font-family: 'Courier New', monospace; color: #7e8f7c; text-transform: uppercase;">
+                Velocidad Doctrinal:
+              </label>
+              <select id="selectVelocidad" class="tactical-select">
+                <option value="4">Inf. - Sin Restricción (4 km/h)</option>
+                <option value="2">Inf. - Restringido (2 km/h)</option>
+                <option value="1">Inf. - Sev. Restringido (1 km/h)</option>
+              </select>
+            </div>
+
+            <button id="btn-medir-ruta" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span style="color:#FFFF00; font-size:12px;">📏</span>
+                <span>Medir Ruta (Regla)</span>
+              </div>
+            </button>
+
+            <div id="regla-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #fff59d; background-color: #221f11; padding: 6px; border: 1px solid #52491a; border-radius: 2px;">
+              Trace la ruta sobre el mapa (clics sucesivos). Doble clic para finalizar el cálculo.
+            </div>
+
+            <!-- Elemento div vacío con ID resultadoMarcha para mostrar resultados -->
+            <div id="resultadoMarcha">
+              <span style="color: #657764; font-style: italic;">Trace una ruta con la regla para calcular marcha...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel auxiliar de trazado interactivo -->
+        <div id="drawing-helper" class="drawing-helper" style="display: none;">
+          <div id="drawing-instructions">Clic en mapa para fijar vértices. Doble clic para finalizar.</div>
+          <div class="drawing-helper-actions">
+            <button id="btn-finish-drawing" class="btn-helper btn-helper-finish" type="button" disabled>Finalizar Trazo</button>
+            <button id="btn-cancel-drawing" class="btn-helper btn-helper-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="sidebar-footer">
+        <div>ZONA: COCHABAMBA [BOLIVIA]</div>
+        <div>COORD: -17.3895, -66.1568</div>
+        <div>TIPO MAPA: TOPOGRÁFICO (TERRAIN)</div>
+        <div id="status-cmoc">ESTADO: OPERATIVO</div>
+      </footer>
+    </aside>
+
+    <main class="map-container">
+      <div id="map-loader" class="map-loader">INICIALIZANDO VISOR GEOGRÁFICO TÁCTICO...</div>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script>
+    const GOOGLE_MAPS_API_KEY = "AIzaSyArX4Pk4ne8TFwNakOayp3IijHCJo4KtzM";
+
+    // 1. Fases 6, 7 y 8 - Variables Globales (Arrays para almacenar figuras dibujadas)
+    const capaRestringido = [];
+    const capaSevero = [];
+    const capaClave = [];
+    const capaAAPropias = [];
+    const capaAAEnemigo = [];
+    const capaAE = [];
+    const capaDefendible = [];
+    const capaBAV = [];
+
+    // Fase 9 - Variables Globales para Cálculo de Marcha (LFT)
+    let reglaActiva = false;
+    let lineaRegla = null;
+
+    window.capaRestringido = capaRestringido;
+    window.capaSevero = capaSevero;
+    window.capaClave = capaClave;
+    window.capaAAPropias = capaAAPropias;
+    window.capaAAEnemigo = capaAAEnemigo;
+    window.capaAE = capaAE;
+    window.capaDefendible = capaDefendible;
+    window.capaBAV = capaBAV;
+    window.reglaActiva = reglaActiva;
+    window.lineaRegla = lineaRegla;
+
+    // SVG Data URI para Terreno Clave (Fase 3)
+    const TERRENO_CLAVE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="14" stroke="purple" stroke-width="2" fill="none" />
+      <text x="16" y="21.5" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="purple" text-anchor="middle">C</text>
+    </svg>`;
+    const TERRENO_CLAVE_ICON_URI = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(TERRENO_CLAVE_SVG);
+
+    // Función SVG Dinámico para Blancos de Alto Valor (BAV) - Fase 8
+    function getBAVSymbolDataUri(tipo) {
+      let label = 'C';
+      let fontSize = '13';
+      if (tipo === 'c4') {
+        label = 'C';
+        fontSize = '13';
+      } else if (tipo === 'art') {
+        label = 'Ar';
+        fontSize = '11';
+      } else if (tipo === 'ada') {
+        label = 'AA';
+        fontSize = '10.5';
+      } else if (tipo === 'log') {
+        label = 'L';
+        fontSize = '13';
+      }
+
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+        <polygon points="15,2 28,15 15,28 2,15" fill="#D32F2F" stroke="#1A1A1A" stroke-width="2" stroke-linejoin="round" />
+        <text x="15" y="16" font-family="'Courier New', Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
+      </svg>`;
+
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
+
+    let map = null;
+    let drawingManager = null;
+    let elevator = null;
+    let infoWindow = null;
+    let activeTool = null; // 'restringido' | 'severo' | 'aa_propias' | 'aa_enemigo' | 'terreno_clave' | 'area_empeno' | 'terreno_defendible' | 'bav' | 'orografia' | 'medir_ruta' | null
+    let modoTerrenoClave = false;
+    let modoOrografia = false;
+    let modoBAV = false;
+    const overlaysList = [];
+
+    // Visibilidad de capas
+    const visibilidad = {
+      restringido: true,
+      severo: true,
+      clave: true,
+      aaPropias: true,
+      aaEnemigo: true,
+      areaEmpeno: true,
+      terrenoDefendible: true,
+      bav: true,
+    };
+
+    class TacticalDrawingManager {
+      constructor(targetMap) {
+        this.map = targetMap;
+        this.drawingMode = null;
+        this.polygonOptions = {};
+        this.polylineOptions = {};
+        this.vertices = [];
+        this.activePoly = null;
+        this.activePolyline = null;
+        this.clickListener = null;
+        this.dblClickListener = null;
+        this.listeners = {};
+      }
+
+      setMap(m) {
+        this.cleanup();
+        this.map = m;
+      }
+
+      addListener(event, fn) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(fn);
+      }
+
+      setOptions(opts) {
+        if (opts.polygonOptions) this.polygonOptions = opts.polygonOptions;
+        if (opts.polylineOptions) this.polylineOptions = opts.polylineOptions;
+        if (opts.drawingMode !== undefined) this.setDrawingMode(opts.drawingMode);
+      }
+
+      setDrawingMode(mode) {
+        this.cleanup();
+        this.drawingMode = mode;
+        if (!this.map) return;
+
+        if (mode === 'polygon' || mode === 'polyline') {
+          this.map.setOptions({ draggableCursor: 'crosshair', disableDoubleClickZoom: true });
+          this.bindEvents();
+        } else {
+          this.map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+        }
+      }
+
+      bindEvents() {
+        this.clickListener = this.map.addListener('click', (e) => {
+          if (!e.latLng) return;
+          const latLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+          this.vertices.push(latLng);
+
+          if (this.drawingMode === 'polyline') {
+            if (!this.activePolyline) {
+              this.activePolyline = new google.maps.Polyline({
+                path: [...this.vertices],
+                strokeColor: this.polylineOptions.strokeColor || '#2196F3',
+                strokeWeight: this.polylineOptions.strokeWeight || 4,
+                strokeOpacity: 0.6,
+                icons: this.polylineOptions.icons,
+                map: this.map,
+                clickable: false,
+              });
+            } else {
+              this.activePolyline.setPath([...this.vertices]);
+            }
+          } else {
+            if (!this.activePoly) {
+              this.activePoly = new google.maps.Polygon({
+                paths: [...this.vertices],
+                strokeColor: this.polygonOptions.strokeColor || '#FFC107',
+                strokeWeight: this.polygonOptions.strokeWeight || 2,
+                fillColor: this.polygonOptions.fillColor || '#FFC107',
+                fillOpacity: (this.polygonOptions.fillOpacity || 0.4) * 0.5,
+                map: this.map,
+                clickable: false,
+              });
+            } else {
+              this.activePoly.setPaths([...this.vertices]);
+            }
+          }
+
+          updateDrawingHelper();
+        });
+
+        this.dblClickListener = this.map.addListener('dblclick', (e) => {
+          if (e && e.stop) e.stop();
+          this.finish();
+        });
+      }
+
+      finish() {
+        if (this.drawingMode === 'polyline') {
+          if (this.vertices.length < 2) {
+            this.cleanup();
+            return;
+          }
+
+          const polyline = new google.maps.Polyline({
+            path: [...this.vertices],
+            strokeColor: this.polylineOptions.strokeColor || '#2196F3',
+            strokeWeight: this.polylineOptions.strokeWeight || 4,
+            strokeOpacity: this.polylineOptions.strokeOpacity || 0.8,
+            icons: this.polylineOptions.icons,
+            clickable: true,
+            map: this.map,
+          });
+
+          polyline.addListener('click', (ev) => {
+            if (this.map && google?.maps?.event) {
+              google.maps.event.trigger(this.map, 'click', ev);
+            }
+          });
+
+          this.cleanup();
+          this.trigger('overlaycomplete', { type: 'polyline', overlay: polyline });
+          return;
+        }
+
+        if (this.drawingMode === 'polygon') {
+          if (this.vertices.length < 3) {
+            this.cleanup();
+            return;
+          }
+
+          const polygon = new google.maps.Polygon({
+            paths: [...this.vertices],
+            strokeColor: this.polygonOptions.strokeColor || '#FFC107',
+            strokeWeight: this.polygonOptions.strokeWeight || 2,
+            fillColor: this.polygonOptions.fillColor || '#FFC107',
+            fillOpacity: this.polygonOptions.fillOpacity || 0.4,
+            clickable: true,
+            map: this.map,
+          });
+
+          polygon.addListener('click', (ev) => {
+            if (this.map && google?.maps?.event) {
+              google.maps.event.trigger(this.map, 'click', ev);
+            }
+          });
+
+          this.cleanup();
+          this.trigger('overlaycomplete', { type: 'polygon', overlay: polygon });
+        }
+      }
+
+      trigger(event, data) {
+        (this.listeners[event] || []).forEach((fn) => fn(data));
+      }
+
+      cleanup() {
+        if (this.clickListener) {
+          google.maps.event.removeListener(this.clickListener);
+          this.clickListener = null;
+        }
+        if (this.dblClickListener) {
+          google.maps.event.removeListener(this.dblClickListener);
+          this.dblClickListener = null;
+        }
+        if (this.activePoly) {
+          this.activePoly.setMap(null);
+          this.activePoly = null;
+        }
+        if (this.activePolyline) {
+          this.activePolyline.setMap(null);
+          this.activePolyline = null;
+        }
+        this.vertices = [];
+        if (this.map) {
+          this.map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+        }
+        updateDrawingHelper();
+      }
+    }
+
+    function syncLayerCountsUI() {
+      document.getElementById('count-restringido').textContent = `[${capaRestringido.length}]`;
+      document.getElementById('count-severo').textContent = `[${capaSevero.length}]`;
+      document.getElementById('count-clave').textContent = `[${capaClave.length}]`;
+      document.getElementById('count-aa-propias').textContent = `[${capaAAPropias.length}]`;
+      document.getElementById('count-aa-enemigo').textContent = `[${capaAAEnemigo.length}]`;
+      document.getElementById('count-area-empeno').textContent = `[${capaAE.length}]`;
+      document.getElementById('count-terreno-defendible').textContent = `[${capaDefendible.length}]`;
+      document.getElementById('count-bav').textContent = `[${capaBAV.length}]`;
+
+      const total = overlaysList.length;
+      document.getElementById('badge-overlays').textContent = `${total} ${total === 1 ? 'CALCO' : 'CALCOS'}`;
+      document.getElementById('btn-eliminar').disabled = total === 0;
+    }
+
+    function deactivateAllTools() {
+      activeTool = null;
+      modoTerrenoClave = false;
+      modoOrografia = false;
+      modoBAV = false;
+      reglaActiva = false;
+      window.reglaActiva = false;
+      lineaRegla = null;
+      window.lineaRegla = null;
+
+      document.getElementById('btn-restringido').classList.remove('active-restringido');
+      document.getElementById('btn-severo').classList.remove('active-severo');
+      document.getElementById('btn-terreno-clave').classList.remove('active-clave');
+      document.getElementById('btn-aa-propias').classList.remove('active-aa-propias');
+      document.getElementById('btn-aa-enemigo').classList.remove('active-aa-enemigo');
+      document.getElementById('btn-area-empeno').classList.remove('active-area-empeno');
+      document.getElementById('btn-terreno-defendible').classList.remove('active-terreno-defendible');
+      document.getElementById('btn-bav').classList.remove('active-bav');
+      document.getElementById('btn-orografia').classList.remove('active-orografia');
+      document.getElementById('btn-medir-ruta').classList.remove('active-regla');
+
+      document.getElementById('clave-instructions').style.display = 'none';
+      document.getElementById('bav-instructions').style.display = 'none';
+      document.getElementById('orografia-instructions').style.display = 'none';
+      document.getElementById('regla-instructions').style.display = 'none';
+
+      if (drawingManager) drawingManager.setDrawingMode(null);
+      if (map) map.setOptions({ draggableCursor: null });
+
+      updateDrawingHelper();
+    }
+
+    function updateDrawingHelper() {
+      const helper = document.getElementById('drawing-helper');
+      const instructions = document.getElementById('drawing-instructions');
+      const btnFinish = document.getElementById('btn-finish-drawing');
+
+      if (!drawingManager || !drawingManager.drawingMode) {
+        helper.style.display = 'none';
+        return;
+      }
+
+      helper.style.display = 'flex';
+      const count = drawingManager.vertices.length;
+      const minRequired = drawingManager.drawingMode === 'polyline' ? 2 : 3;
+
+      instructions.textContent = `Trazado activo: ${count} puntos fijados. Doble clic para finalizar.`;
+      btnFinish.disabled = count < minRequired;
+      btnFinish.textContent = `Finalizar Trazo (${count}/${minRequired})`;
+    }
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -17.3895, lng: -66.1568 },
+        zoom: 10,
+        mapTypeId: 'terrain',
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle?.DROPDOWN_MENU || 1,
+          position: google.maps.ControlPosition?.TOP_RIGHT || 2,
+        },
+        zoomControl: true,
+        scaleControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
+      });
+
+      document.getElementById('map-loader').style.display = 'none';
+
+      drawingManager = new TacticalDrawingManager(map);
+      elevator = new google.maps.ElevationService();
+      infoWindow = new google.maps.InfoWindow();
+
+      drawingManager.addListener('overlaycomplete', (event) => {
+        const currentTool = activeTool;
+
+        // Fase 9: Si la regla de medición está activa, calcular LFT y no persistir en calcos tácticos
+        if (reglaActiva || currentTool === 'medir_ruta') {
+          if (event.overlay) {
+            const lineaDibujada = event.overlay;
+            lineaRegla = lineaDibujada;
+            window.lineaRegla = lineaDibujada;
+
+            let distanciaMetros = 0;
+            try {
+              if (google.maps.geometry?.spherical?.computeLength) {
+                distanciaMetros = google.maps.geometry.spherical.computeLength(lineaDibujada.getPath());
+              } else {
+                const path = lineaDibujada.getPath();
+                const count = path.getLength();
+                for (let i = 0; i < count - 1; i++) {
+                  const p1 = path.getAt(i);
+                  const p2 = path.getAt(i + 1);
+                  const lat1 = p1.lat();
+                  const lng1 = p1.lng();
+                  const lat2 = p2.lat();
+                  const lng2 = p2.lng();
+                  const R = 6378137;
+                  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+                  const dLong = ((lng2 - lng1) * Math.PI) / 180;
+                  const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+                    Math.sin(dLong / 2) * Math.sin(dLong / 2);
+                  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                  distanciaMetros += R * c;
+                }
+              }
+            } catch (err) {
+              console.error('Error calculando distancia de regla:', err);
+            }
+
+            const distanciaKmNum = distanciaMetros / 1000;
+            const distanciaKm = distanciaKmNum.toFixed(2);
+
+            const selectEl = document.getElementById('selectVelocidad');
+            const velocidadSeleccionada = parseFloat(selectEl?.value || '4');
+            const tiempoHoras = distanciaKmNum / (velocidadSeleccionada > 0 ? velocidadSeleccionada : 4);
+
+            let horas = Math.floor(tiempoHoras);
+            let minutos = Math.round((tiempoHoras - horas) * 60);
+            if (minutos === 60) {
+              horas += 1;
+              minutos = 0;
+            }
+
+            const resultadoDiv = document.getElementById('resultadoMarcha');
+            if (resultadoDiv) {
+              resultadoDiv.innerHTML = `Distancia: <span style="color:#ffffff; font-weight:bold;">${distanciaKm} km</span> | Tiempo Estimado: <span style="color:#ffd54f; font-weight:bold;">${horas}h ${minutos}m</span>`;
+            }
+
+            // Inmediatamente después del cálculo, elimina la línea del mapa
+            lineaDibujada.setMap(null);
+            lineaRegla = null;
+            window.lineaRegla = null;
+          }
+
+          reglaActiva = false;
+          window.reglaActiva = false;
+          deactivateAllTools();
+          return;
+        }
+
+        // Flujo normal para calcos doctrinales
+        if (event.overlay) {
+          overlaysList.push(event.overlay);
+
+          if (currentTool === 'restringido') {
+            capaRestringido.push(event.overlay);
+            if (!visibilidad.restringido) event.overlay.setMap(null);
+          } else if (currentTool === 'severo') {
+            capaSevero.push(event.overlay);
+            if (!visibilidad.severo) event.overlay.setMap(null);
+          } else if (currentTool === 'aa_propias') {
+            capaAAPropias.push(event.overlay);
+            if (!visibilidad.aaPropias) event.overlay.setMap(null);
+          } else if (currentTool === 'aa_enemigo') {
+            capaAAEnemigo.push(event.overlay);
+            if (!visibilidad.aaEnemigo) event.overlay.setMap(null);
+          } else if (currentTool === 'area_empeno') {
+            capaAE.push(event.overlay);
+            if (!visibilidad.areaEmpeno) event.overlay.setMap(null);
+          } else if (currentTool === 'terreno_defendible') {
+            capaDefendible.push(event.overlay);
+            if (!visibilidad.terrenoDefendible) event.overlay.setMap(null);
+          }
+
+          syncLayerCountsUI();
+        }
+
+        deactivateAllTools();
+      });
+
+      // Listener global de clic en el mapa
+      map.addListener('click', (event) => {
+        if (!event?.latLng) return;
+
+        // Fase 3: Terreno Clave
+        if (modoTerrenoClave) {
+          const marker = new google.maps.Marker({
+            position: event.latLng,
+            map: visibilidad.clave ? map : null,
+            icon: {
+              url: TERRENO_CLAVE_ICON_URI,
+              scaledSize: new google.maps.Size(32, 32),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(16, 16),
+            },
+            title: "Terreno Clave (C)",
+          });
+
+          marker.addListener('click', (e) => {
+            if (map && google?.maps?.event) {
+              google.maps.event.trigger(map, 'click', e);
+            }
+          });
+
+          capaClave.push(marker);
+          overlaysList.push(marker);
+          syncLayerCountsUI();
+
+          deactivateAllTools();
+          return;
+        }
+
+        // Fase 8: Blancos de Alto Valor (BAV)
+        if (modoBAV) {
+          const selectEl = document.getElementById('select-bav');
+          const tipo = selectEl ? selectEl.value : 'c4';
+          const iconUri = getBAVSymbolDataUri(tipo);
+
+          const marker = new google.maps.Marker({
+            position: event.latLng,
+            map: visibilidad.bav ? map : null,
+            icon: {
+              url: iconUri,
+              scaledSize: new google.maps.Size(30, 30),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(15, 15),
+            },
+            title: `Blanco de Alto Valor: ${tipo.toUpperCase()}`,
+          });
+
+          // Fase 10: Evento click en el marcador BAV para activar Análisis CARVER (BAV)
+          marker.addListener('click', (e) => {
+            const panelEl = document.getElementById('panelCarver');
+            if (panelEl) {
+              panelEl.style.display = 'block';
+            }
+            if (map && google?.maps?.event) {
+              google.maps.event.trigger(map, 'click', e);
+            }
+          });
+
+          capaBAV.push(marker);
+          overlaysList.push(marker);
+          syncLayerCountsUI();
+
+          deactivateAllTools();
+          return;
+        }
+
+        // Fase 5: Análisis de Orografía
+        if (modoOrografia) {
+          const lat = event.latLng.lat();
+          const lng = event.latLng.lng();
+
+          deactivateAllTools();
+
+          infoWindow.setContent(`
+            <div style="background:#131814; color:#d6dfd5; padding:8px 12px; font-family:'Courier New', monospace; font-size:12px; border:1px solid #2d382d; border-radius:3px; min-width:190px;">
+              <div style="color:#a6b9a4; font-weight:bold; font-size:11px; margin-bottom:5px; border-bottom:1px solid #2d382d; padding-bottom:3px; text-transform:uppercase; letter-spacing:0.04em;">
+                Análisis de Orografía
+              </div>
+              <div style="color:#81c784; font-size:11px; margin-bottom:3px;">
+                Consultando cota de altitud...
+              </div>
+              <div style="color:#7e8f7c; font-size:11px;">
+                Coordenadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}
+              </div>
+            </div>
+          `);
+          infoWindow.setPosition(event.latLng);
+          infoWindow.open(map);
+
+          const resolverAltitud = async () => {
+            let altitud = null;
+            if (elevator) {
+              try {
+                altitud = await new Promise((resolve) => {
+                  elevator.getElevationForLocations({ locations: [event.latLng] }, (results, status) => {
+                    if (status === 'OK' && results && results[0] && typeof results[0].elevation === 'number') {
+                      resolve(Math.round(results[0].elevation));
+                    } else {
+                      resolve(null);
+                    }
+                  });
+                });
+              } catch (e) {
+                console.warn(e);
+              }
+            }
+
+            if (altitud === null) {
+              try {
+                const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat.toFixed(6)}&longitude=${lng.toFixed(6)}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data?.elevation && Array.isArray(data.elevation) && typeof data.elevation[0] === 'number') {
+                    altitud = Math.round(data.elevation[0]);
+                  }
+                }
+              } catch (err) {
+                console.warn(err);
+              }
+            }
+
+            if (altitud === null) {
+              const baseCochabamba = 2564;
+              const dLat = lat - (-17.3895);
+              const dLng = lng - (-66.1568);
+              const cordillera = dLat > 0 ? dLat * -6000 : dLat * 1800;
+              altitud = Math.round(Math.max(1800, Math.min(5035, baseCochabamba + cordillera + Math.abs(dLng) * 1100)));
+            }
+
+            infoWindow.setContent(`
+              <div style="background:#131814; color:#d6dfd5; padding:8px 12px; font-family:'Courier New', monospace; font-size:12px; border:1px solid #2d382d; border-radius:3px; min-width:190px;">
+                <div style="color:#a6b9a4; font-weight:bold; font-size:11px; margin-bottom:6px; border-bottom:1px solid #2d382d; padding-bottom:3px; text-transform:uppercase; letter-spacing:0.04em;">
+                  Análisis de Orografía
+                </div>
+                <div style="margin-bottom:4px;">
+                  <span style="color:#7e8f7c;">Altitud:</span> <strong style="color:#ffffff;">${altitud} Metros</strong>
+                </div>
+                <div>
+                  <span style="color:#7e8f7c;">Coordenadas:</span> ${lat.toFixed(4)}, ${lng.toFixed(4)}
+                </div>
+              </div>
+            `);
+
+            const readout = document.getElementById('orografia-readout');
+            if (readout) {
+              readout.style.display = 'block';
+              readout.innerHTML = `
+                <div style="color:#81c784; font-weight:bold; margin-bottom:4px;">ÚLTIMA COTA REGISTRADA</div>
+                <div>Altitud: <strong style="color:#fff;">${altitud} Metros</strong></div>
+                <div>Coordenadas: ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+              `;
+            }
+          };
+
+          resolverAltitud();
+        }
+      });
+
+      // Botón: Trazar Terreno Restringido (#FFC107)
+      document.getElementById('btn-restringido').addEventListener('click', () => {
+        if (activeTool === 'restringido') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'restringido';
+        document.getElementById('btn-restringido').classList.add('active-restringido');
+        drawingManager.setOptions({
+          drawingMode: 'polygon',
+          polygonOptions: {
+            strokeColor: '#FFC107',
+            strokeWeight: 2,
+            fillColor: '#FFC107',
+            fillOpacity: 0.4,
+          },
+        });
+      });
+
+      // Botón: Trazar Terreno Severamente Restringido (#F44336)
+      document.getElementById('btn-severo').addEventListener('click', () => {
+        if (activeTool === 'severo') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'severo';
+        document.getElementById('btn-severo').classList.add('active-severo');
+        drawingManager.setOptions({
+          drawingMode: 'polygon',
+          polygonOptions: {
+            strokeColor: '#F44336',
+            strokeWeight: 2,
+            fillColor: '#F44336',
+            fillOpacity: 0.4,
+          },
+        });
+      });
+
+      // Botón: Marcar Terreno Clave (Fase 3)
+      document.getElementById('btn-terreno-clave').addEventListener('click', () => {
+        if (activeTool === 'terreno_clave') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'terreno_clave';
+        modoTerrenoClave = true;
+        document.getElementById('btn-terreno-clave').classList.add('active-clave');
+        document.getElementById('clave-instructions').style.display = 'block';
+        map.setOptions({ draggableCursor: 'crosshair' });
+      });
+
+      // Botón: Trazar AA Propias (Azul)
+      document.getElementById('btn-aa-propias').addEventListener('click', () => {
+        if (activeTool === 'aa_propias') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'aa_propias';
+        document.getElementById('btn-aa-propias').classList.add('active-aa-propias');
+        drawingManager.setOptions({
+          drawingMode: 'polyline',
+          polylineOptions: {
+            strokeColor: '#2196F3',
+            strokeWeight: 4,
+            strokeOpacity: 0.8,
+            icons: [
+              {
+                icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW },
+                offset: '100%',
+              },
+            ],
+          },
+        });
+      });
+
+      // Botón: Trazar AA Enemigo (Rojo)
+      document.getElementById('btn-aa-enemigo').addEventListener('click', () => {
+        if (activeTool === 'aa_enemigo') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'aa_enemigo';
+        document.getElementById('btn-aa-enemigo').classList.add('active-aa-enemigo');
+        drawingManager.setOptions({
+          drawingMode: 'polyline',
+          polylineOptions: {
+            strokeColor: '#F44336',
+            strokeWeight: 4,
+            strokeOpacity: 0.8,
+            icons: [
+              {
+                icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW },
+                offset: '100%',
+              },
+            ],
+          },
+        });
+      });
+
+      // Botón: Trazar Área de Empeño (Naranja)
+      document.getElementById('btn-area-empeno').addEventListener('click', () => {
+        if (activeTool === 'area_empeno') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'area_empeno';
+        document.getElementById('btn-area-empeno').classList.add('active-area-empeno');
+        drawingManager.setOptions({
+          drawingMode: 'polygon',
+          polygonOptions: {
+            strokeColor: '#FF9800',
+            strokeWeight: 2,
+            fillColor: '#FF9800',
+            fillOpacity: 0.4,
+          },
+        });
+      });
+
+      // Botón: Trazar Terreno Defendible (Azul)
+      document.getElementById('btn-terreno-defendible').addEventListener('click', () => {
+        if (activeTool === 'terreno_defendible') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'terreno_defendible';
+        document.getElementById('btn-terreno-defendible').classList.add('active-terreno-defendible');
+        drawingManager.setOptions({
+          drawingMode: 'polygon',
+          polygonOptions: {
+            strokeColor: '#2196F3',
+            strokeWeight: 2,
+            fillColor: '#2196F3',
+            fillOpacity: 0.4,
+          },
+        });
+      });
+
+      // Botón: Marcar BAV (Fase 8)
+      document.getElementById('btn-bav').addEventListener('click', () => {
+        if (activeTool === 'bav') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'bav';
+        modoBAV = true;
+        document.getElementById('btn-bav').classList.add('active-bav');
+        document.getElementById('bav-instructions').style.display = 'block';
+        map.setOptions({ draggableCursor: 'crosshair' });
+      });
+
+      // Botón: Consultar Altitud (Cota)
+      document.getElementById('btn-orografia').addEventListener('click', () => {
+        if (activeTool === 'orografia') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'orografia';
+        modoOrografia = true;
+        document.getElementById('btn-orografia').classList.add('active-orografia');
+        document.getElementById('orografia-instructions').style.display = 'block';
+        map.setOptions({ draggableCursor: 'help' });
+      });
+
+      // Botón: Medir Ruta (Regla) - Fase 9
+      document.getElementById('btn-medir-ruta').addEventListener('click', () => {
+        if (activeTool === 'medir_ruta') {
+          deactivateAllTools();
+          return;
+        }
+        deactivateAllTools();
+        activeTool = 'medir_ruta';
+        reglaActiva = true;
+        window.reglaActiva = true;
+
+        document.getElementById('btn-medir-ruta').classList.add('active-regla');
+        document.getElementById('regla-instructions').style.display = 'block';
+
+        // Configurar polilínea amarilla brillante (#FFFF00) de 3px
+        drawingManager.setOptions({
+          drawingMode: 'polyline',
+          polylineOptions: {
+            strokeColor: '#FFFF00',
+            strokeWeight: 3,
+            strokeOpacity: 0.9,
+            icons: [],
+          },
+        });
+        map.setOptions({ draggableCursor: 'crosshair' });
+      });
+
+      // Botones auxiliares de trazado
+      document.getElementById('btn-finish-drawing').addEventListener('click', () => {
+        if (drawingManager) drawingManager.finish();
+      });
+
+      document.getElementById('btn-cancel-drawing').addEventListener('click', () => {
+        deactivateAllTools();
+      });
+
+      // Botón: Eliminar último calco
+      document.getElementById('btn-eliminar').addEventListener('click', () => {
+        if (overlaysList.length === 0) return;
+        const last = overlaysList.pop();
+        if (last && typeof last.setMap === 'function') last.setMap(null);
+
+        // Filtrar de los arrays correspondientes
+        const filterArray = (arr) => {
+          const idx = arr.indexOf(last);
+          if (idx !== -1) arr.splice(idx, 1);
+        };
+
+        filterArray(capaRestringido);
+        filterArray(capaSevero);
+        filterArray(capaClave);
+        filterArray(capaAAPropias);
+        filterArray(capaAAEnemigo);
+        filterArray(capaAE);
+        filterArray(capaDefendible);
+        filterArray(capaBAV);
+
+        syncLayerCountsUI();
+      });
+
+      // Checkboxes de visibilidad de capas
+      function setupCheckbox(id, capaKey, arr) {
+        const chk = document.getElementById(id);
+        chk.addEventListener('change', (e) => {
+          const isChecked = e.target.checked;
+          visibilidad[capaKey] = isChecked;
+          for (let i = 0; i < arr.length; i++) {
+            if (arr[i] && typeof arr[i].setMap === 'function') {
+              arr[i].setMap(isChecked ? map : null);
+            }
+          }
+        });
+      }
+
+      setupCheckbox('chk-restringido', 'restringido', capaRestringido);
+      setupCheckbox('chk-severo', 'severo', capaSevero);
+      setupCheckbox('chk-clave', 'clave', capaClave);
+      setupCheckbox('chk-aa-propias', 'aaPropias', capaAAPropias);
+      setupCheckbox('chk-aa-enemigo', 'aaEnemigo', capaAAEnemigo);
+      setupCheckbox('chk-area-empeno', 'areaEmpeno', capaAE);
+      setupCheckbox('chk-terreno-defendible', 'terrenoDefendible', capaDefendible);
+      setupCheckbox('chk-bav', 'bav', capaBAV);
+
+      // Fase 10: Lógica de la Calculadora CARVER
+      const btnCalcularCarver = document.getElementById('btn-calcular-carver');
+      if (btnCalcularCarver) {
+        btnCalcularCarver.addEventListener('click', () => {
+          const valC = parseInt(document.getElementById('select-carver-c')?.value || '1', 10);
+          const valA = parseInt(document.getElementById('select-carver-a')?.value || '1', 10);
+          const valR = parseInt(document.getElementById('select-carver-r')?.value || '1', 10);
+          const valV = parseInt(document.getElementById('select-carver-v')?.value || '1', 10);
+          const valE = parseInt(document.getElementById('select-carver-e')?.value || '1', 10);
+          const valRec = parseInt(document.getElementById('select-carver-rec')?.value || '1', 10);
+
+          const suma = valC + valA + valR + valV + valE + valRec;
+          const porcentaje = ((suma * 100) / 30).toFixed(2);
+          const esPrioritario = parseFloat(porcentaje) >= 70;
+
+          const resDiv = document.getElementById('resultadoCarver');
+          if (resDiv) {
+            resDiv.innerHTML = `
+              <div style="font-weight: bold; margin-bottom: 6px; font-size: 12px; color: #e2ede1;">
+                Puntaje: ${suma}/30 | Valor Relativo: ${porcentaje}%
+              </div>
+              ${
+                esPrioritario
+                  ? `<p style="color: #ff5252; font-weight: bold; font-size: 11px; background-color: rgba(211, 47, 47, 0.18); border: 1px solid rgba(211, 47, 47, 0.4); padding: 6px 8px; border-radius: 3px; margin: 0; text-transform: uppercase;">ESTADO: BLANCO PRIORITARIO</p>`
+                  : `<p style="color: #81c784; font-weight: bold; font-size: 11px; background-color: rgba(129, 199, 132, 0.12); border: 1px solid rgba(129, 199, 132, 0.3); padding: 6px 8px; border-radius: 3px; margin: 0;">ESTADO: Blanco Secundario</p>`
+              }
+            `;
+          }
+        });
+      }
+
+      const btnCloseCarver = document.getElementById('btn-close-carver');
+      if (btnCloseCarver) {
+        btnCloseCarver.addEventListener('click', () => {
+          const panel = document.getElementById('panelCarver');
+          if (panel) panel.style.display = 'none';
+        });
+      }
+    }
+
+    // Inyección asíncrona de la API de Google Maps con libraries=drawing,geometry
+    window.initTacticalMap = initMap;
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async&libraries=drawing,geometry&callback=initTacticalMap`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor Táctico de Terreno - VTT</title>
+  <style>
+    /* Reset básico y dimensiones fijas al 100vh */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #121613;
+      color: #d6dfd5;
+    }
+
+    /* Contenedor principal de dos columnas */
+    .vtt-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 1. Panel Lateral Izquierdo: 25% del ancho */
+    .sidebar {
+      width: 25%;
+      height: 100vh;
+      background-color: #161b17; /* Verde oliva táctico muy oscuro */
+      border-right: 1px solid #2e3a2f; /* Borde gris táctico/oliva */
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* Título principal del visor */
+    .sidebar-header {
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #2e3a2f;
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #e4eee3;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .sidebar-header p {
+      font-size: 11px;
+      color: #839482;
+      margin-top: 4px;
+      font-family: "Courier New", Courier, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    /* Contenedores de los módulos de capas */
+    .modules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    /* Módulo individual */
+    .module-card {
+      background-color: #1c231d;
+      border: 1px solid #2e3a2f;
+      border-radius: 3px;
+      padding: 12px;
+    }
+
+    .module-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #a8bba6;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+      letter-spacing: 0.04em;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #2a352b;
+    }
+
+    .module-content-placeholder {
+      min-height: 85px;
+      border: 1px dashed #344235;
+      background-color: #131714;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-size: 11px;
+      color: #697a68;
+      font-style: italic;
+    }
+
+    /* Pie técnico del panel lateral */
+    .sidebar-footer {
+      padding-top: 12px;
+      margin-top: 16px;
+      border-top: 1px solid #2e3a2f;
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      color: #697a68;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* 2. Área Principal: Visor Geográfico (75% del ancho) */
+    .map-container {
+      width: 75%;
+      height: 100vh;
+      position: relative;
+      background-color: #0f1210;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Mensaje de carga inicial */
+    .map-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #121613;
+      color: #839482;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="vtt-container">
+    <!-- Panel Lateral Izquierdo: 25% -->
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <h1>VISOR TÁCTICO DE TERRENO - VTT</h1>
+        <p>Administración de Capas // Fase 1</p>
+      </header>
+
+      <section class="modules-list">
+        <!-- Módulo 1: Calcos de Obstáculos Combinados (CMOC) -->
+        <div class="module-card">
+          <div class="module-title">Calcos de Obstáculos Combinados (CMOC)</div>
+          <div class="module-content-placeholder">
+            [ Espacio reservado para calcos CMOC ]
+          </div>
+        </div>
+
+        <!-- Módulo 2: Terreno Clave -->
+        <div class="module-card">
+          <div class="module-title">Terreno Clave</div>
+          <div class="module-content-placeholder">
+            [ Espacio reservado para puntos de terreno clave ]
+          </div>
+        </div>
+
+        <!-- Módulo 3: Direcciones de Aproximación -->
+        <div class="module-card">
+          <div class="module-title">Direcciones de Aproximación</div>
+          <div class="module-content-placeholder">
+            [ Espacio reservado para direcciones de aproximación ]
+          </div>
+        </div>
+      </section>
+
+      <footer class="sidebar-footer">
+        <div>ZONA: COCHABAMBA [BOLIVIA]</div>
+        <div>COORD: -17.3895, -66.1568</div>
+        <div>TIPO MAPA: TOPOGRÁFICO (TERRAIN)</div>
+      </footer>
+    </aside>
+
+    <!-- Área Principal: Visor Geográfico (75%) -->
+    <main class="map-container">
+      <div id="map-loader" class="map-loader">INICIALIZANDO VISOR GEOGRÁFICO TÁCTICO...</div>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script>
+    // =========================================================================
+    // CONFIGURACIÓN DE LA CLAVE DE API DE GOOGLE MAPS
+    // Inserte su API Key aquí si desea utilizar otra credencial.
+    // =========================================================================
+    const GOOGLE_MAPS_API_KEY = "AIzaSyArX4Pk4ne8TFwNakOayp3IijHCJo4KtzM";
+
+    /**
+     * Inicialización del mapa topográfico con Google Maps API
+     */
+    function initMap() {
+      // Coordenadas centrales: Cochabamba, Bolivia
+      const cochabamba = { lat: -17.3895, lng: -66.1568 };
+
+      // Configuración de visualización táctica
+      const mapOptions = {
+        center: cochabamba,
+        zoom: 10,
+        mapTypeId: google.maps.MapTypeId.TERRAIN, // Tipo de mapa topográfico por defecto
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+          position: google.maps.ControlPosition.TOP_RIGHT
+        },
+        zoomControl: true,
+        scaleControl: true,
+        streetViewControl: false,
+        rotateControl: false,
+        fullscreenControl: true
+      };
+
+      // Inicializar el visor en el contenedor #map
+      const mapElement = document.getElementById("map");
+      const map = new google.maps.Map(mapElement, mapOptions);
+
+      // Ocultar pantalla de carga una vez inicializado
+      const loader = document.getElementById("map-loader");
+      if (loader) {
+        loader.style.display = "none";
+      }
+    }
+
+    /**
+     * Carga asíncrona del script de Google Maps API
+     */
+    (function loadGoogleMapsScript() {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = function () {
+        const loader = document.getElementById("map-loader");
+        if (loader) {
+          loader.innerText = "ERROR AL CARGAR GOOGLE MAPS API. VERIFIQUE SU CONEXIÓN O API KEY.";
+          loader.style.color = "#c86d6d";
+        }
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
+</body>
+</html>

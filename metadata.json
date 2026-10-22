@@ -1,0 +1,6 @@
+{
+  "name": "Visor Táctico de Terreno (VTT)",
+  "description": "Plataforma SIG militar para análisis táctico de terreno, calcos CMOC, marcas de Terreno Clave, Direcciones de Aproximación (AA), Análisis de Orografía, Gestor de Capas, Áreas Tácticas, Áreas de Interés Nombradas (AIN), Matriz de Eventos y Líneas Fase de Tiempo (LFT), Blancos de Alto Valor (BAV), Cálculo de Marcha, Análisis CARVER, Matriz de Efectos CC.MM. en Operaciones, Tablero de Potencia Relativa de Combate (PRC) y Despliegue de Fuerzas de Maniobra.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

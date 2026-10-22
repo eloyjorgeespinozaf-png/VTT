@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor Táctico de Terreno - VTT (Fase 3)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #121613;
+      color: #d6dfd5;
+    }
+
+    .vtt-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Panel Lateral: 25% */
+    .sidebar {
+      width: 25%;
+      height: 100vh;
+      background-color: #161b17;
+      border-right: 1px solid #2e3a2f;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #2e3a2f;
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #e4eee3;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .sidebar-header p {
+      font-size: 11px;
+      color: #839482;
+      margin-top: 4px;
+      font-family: "Courier New", Courier, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .modules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .module-card {
+      background-color: #1c231d;
+      border: 1px solid #2e3a2f;
+      border-radius: 3px;
+      padding: 12px;
+    }
+
+    .module-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #2a352b;
+    }
+
+    .module-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #a8bba6;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .calcos-counter {
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      color: #8fa38e;
+      background-color: #131913;
+      padding: 1px 6px;
+      border-radius: 2px;
+      border: 1px solid #2d3a2e;
+    }
+
+    .cmoc-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-tactical {
+      width: 100%;
+      padding: 9px 12px;
+      background-color: #141a15;
+      border: 1px solid #324033;
+      border-radius: 2px;
+      color: #d6dfd5;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-tactical:hover:not(:disabled) {
+      background-color: #1d261e;
+      border-color: #495e4b;
+    }
+
+    .btn-tactical.active-restringido {
+      background-color: #2a301e;
+      border-color: #FFC107;
+      color: #ffe082;
+    }
+
+    .btn-tactical.active-severo {
+      background-color: #311c1d;
+      border-color: #F44336;
+      color: #ffcdd2;
+    }
+
+    .btn-tactical.active-clave {
+      background-color: #29182d;
+      border-color: purple;
+      color: #e9d5ff;
+    }
+
+    .btn-delete {
+      background-color: #201718;
+      border-color: #442426;
+      color: #dfb2b4;
+    }
+
+    .btn-delete:hover:not(:disabled) {
+      background-color: #2c1c1e;
+      border-color: #5c2f32;
+    }
+
+    .btn-tactical:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #262f27;
+      color: #556354;
+    }
+
+    .btn-content-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .color-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .color-restringido {
+      background-color: #FFC107;
+      box-shadow: 0 0 4px rgba(255, 193, 7, 0.4);
+    }
+
+    .color-severo {
+      background-color: #F44336;
+      box-shadow: 0 0 4px rgba(244, 67, 54, 0.4);
+    }
+
+    .color-clave {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid purple;
+      color: purple;
+      font-size: 9px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .drawing-helper {
+      margin-top: 10px;
+      padding: 8px;
+      background-color: #121613;
+      border-radius: 2px;
+      border: 1px solid #2d3a2e;
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      color: #a4b5a2;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .drawing-helper-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .btn-helper {
+      padding: 4px 8px;
+      border-radius: 2px;
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid;
+    }
+
+    .btn-helper-finish {
+      flex: 1;
+      background-color: #233324;
+      border-color: #3e5a40;
+      color: #c5e1c4;
+    }
+
+    .btn-helper-finish:disabled {
+      background-color: #182019;
+      border-color: #242f25;
+      color: #556454;
+      cursor: not-allowed;
+    }
+
+    .btn-helper-cancel {
+      background-color: #241a1a;
+      border-color: #442828;
+      color: #dca6a6;
+    }
+
+    .module-content-placeholder {
+      min-height: 80px;
+      border: 1px dashed #344235;
+      background-color: #131714;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-size: 11px;
+      color: #697a68;
+      font-style: italic;
+    }
+
+    .sidebar-footer {
+      padding-top: 12px;
+      margin-top: 16px;
+      border-top: 1px solid #2e3a2f;
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      color: #697a68;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* Área de Mapa: 75% */
+    .map-container {
+      width: 75%;
+      height: 100vh;
+      position: relative;
+      background-color: #0f1210;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #121613;
+      color: #839482;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="vtt-container">
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <h1>VISOR TÁCTICO DE TERRENO - VTT</h1>
+        <p>Administración de Capas // Fase 3</p>
+      </header>
+
+      <section class="modules-list">
+        <!-- CMOC -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Calcos de Obstáculos Combinados (CMOC)</span>
+            <span id="calcos-counter" class="calcos-counter">0 calcos</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-restringido" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-restringido"></span>
+                <span>Trazar Terreno Restringido</span>
+              </div>
+            </button>
+
+            <button id="btn-severo" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-severo"></span>
+                <span>Trazar Terreno Severamente Restringido</span>
+              </div>
+            </button>
+
+            <!-- Botón Eliminar Último Calco -->
+            <button id="btn-eliminar" class="btn-tactical btn-delete" type="button" disabled>
+              <div class="btn-content-left">
+                <span style="color:#d9534f; font-weight:bold;">⌫</span>
+                <span>Eliminar último calco</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Panel de trazado activo -->
+          <div id="drawing-helper" class="drawing-helper" style="display: none;">
+            <div id="drawing-instructions">Clic en mapa para fijar vértices (0 marcados). Doble clic para cerrar.</div>
+            <div class="drawing-helper-actions">
+              <button id="btn-finish-calco" class="btn-helper btn-helper-finish" type="button" disabled>Finalizar Calco</button>
+              <button id="btn-cancel-calco" class="btn-helper btn-helper-cancel" type="button">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terreno Clave (Fase 3) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Terreno Clave</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <!-- Botón: Marcar Terreno Clave -->
+            <button id="btn-terreno-clave" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-clave">C</span>
+                <span>Marcar Terreno Clave</span>
+              </div>
+            </button>
+
+            <div id="clave-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #d8b4fe; background-color: #1a1220; padding: 6px; border: 1px solid #4c1d63; border-radius: 2px;">
+              Haga clic en el mapa para situar el símbolo de Terreno Clave (C).
+            </div>
+          </div>
+        </div>
+
+        <!-- Direcciones de Aproximación -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Direcciones de Aproximación</span>
+          </div>
+          <div class="module-content-placeholder">
+            [ Espacio reservado para direcciones de aproximación ]
+          </div>
+        </div>
+      </section>
+
+      <footer class="sidebar-footer">
+        <div>ZONA: COCHABAMBA [BOLIVIA]</div>
+        <div>COORD: -17.3895, -66.1568</div>
+        <div>TIPO MAPA: TOPOGRÁFICO (TERRAIN)</div>
+        <div id="status-cmoc">ESTADO: OPERATIVO</div>
+      </footer>
+    </aside>
+
+    <main class="map-container">
+      <div id="map-loader" class="map-loader">INICIALIZANDO VISOR GEOGRÁFICO TÁCTICO...</div>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script>
+    const GOOGLE_MAPS_API_KEY = "AIzaSyArX4Pk4ne8TFwNakOayp3IijHCJo4KtzM";
+
+    // Requisito 2: SVG Data URI de círculo transparente, borde 2px morado y letra 'C' mayúscula en negrita
+    const TERRENO_CLAVE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="14" stroke="purple" stroke-width="2" fill="none" />
+      <text x="16" y="21.5" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="purple" text-anchor="middle">C</text>
+    </svg>`;
+    const TERRENO_CLAVE_ICON_URI = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(TERRENO_CLAVE_SVG);
+
+    let map = null;
+    let drawingManager = null;
+    let currentDrawingType = null;
+    let modoTerrenoClave = false; // Requisito 3: Variable de estado global
+    const overlaysList = [];
+
+    /**
+     * Gestor táctico de dibujo (Independiente y robusto para Maps JS API)
+     */
+    class TacticalDrawingManager {
+      constructor(targetMap) {
+        this.map = targetMap;
+        this.drawingMode = null;
+        this.polygonOptions = {};
+        this.vertices = [];
+        this.activePoly = null;
+        this.clickListener = null;
+        this.dblClickListener = null;
+        this.listeners = {};
+      }
+
+      setMap(m) {
+        this.cleanup();
+        this.map = m;
+      }
+
+      addListener(event, fn) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(fn);
+      }
+
+      setOptions(opts) {
+        if (opts.polygonOptions) this.polygonOptions = opts.polygonOptions;
+        if (opts.drawingMode !== undefined) this.setDrawingMode(opts.drawingMode);
+      }
+
+      setDrawingMode(mode) {
+        this.cleanup();
+        this.drawingMode = mode;
+
+        if (!this.map) return;
+
+        if (mode === "polygon") {
+          this.map.setOptions({ draggableCursor: "crosshair", disableDoubleClickZoom: true });
+          this.bindEvents();
+          showDrawingHelper(true);
+        } else {
+          this.map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+          showDrawingHelper(false);
+        }
+      }
+
+      bindEvents() {
+        this.clickListener = this.map.addListener("click", (e) => {
+          if (!e.latLng) return;
+          const pt = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+          this.vertices.push(pt);
+          updateDrawingInstructions(this.vertices.length);
+
+          if (!this.activePoly && this.vertices.length >= 2) {
+            this.activePoly = new google.maps.Polygon({
+              paths: this.vertices,
+              strokeColor: this.polygonOptions.strokeColor || "#FFC107",
+              strokeWeight: this.polygonOptions.strokeWeight || 2,
+              fillColor: this.polygonOptions.fillColor || "#FFC107",
+              fillOpacity: this.polygonOptions.fillOpacity || 0.4,
+              clickable: false,
+              map: this.map,
+              zIndex: 99
+            });
+          } else if (this.activePoly) {
+            this.activePoly.setPath(this.vertices);
+          }
+        });
+
+        this.dblClickListener = this.map.addListener("dblclick", (e) => {
+          if (e?.stop) e.stop();
+          if (this.vertices.length >= 3) {
+            this.finish();
+          }
+        });
+      }
+
+      finish() {
+        if (this.vertices.length < 3 || !this.map) {
+          this.cleanup();
+          return;
+        }
+
+        const poly = new google.maps.Polygon({
+          paths: [...this.vertices],
+          strokeColor: this.polygonOptions.strokeColor || "#FFC107",
+          strokeWeight: this.polygonOptions.strokeWeight || 2,
+          fillColor: this.polygonOptions.fillColor || "#FFC107",
+          fillOpacity: this.polygonOptions.fillOpacity || 0.4,
+          clickable: true,
+          map: this.map,
+          zIndex: 1
+        });
+
+        this.cleanup();
+
+        const handlers = this.listeners["overlaycomplete"] || [];
+        handlers.forEach((fn) => {
+          try {
+            fn({ type: "polygon", overlay: poly });
+          } catch (err) {
+            console.error(err);
+          }
+        });
+      }
+
+      cleanup() {
+        if (this.clickListener && google?.maps?.event) {
+          google.maps.event.removeListener(this.clickListener);
+          this.clickListener = null;
+        }
+        if (this.dblClickListener && google?.maps?.event) {
+          google.maps.event.removeListener(this.dblClickListener);
+          this.dblClickListener = null;
+        }
+        if (this.activePoly) {
+          this.activePoly.setMap(null);
+          this.activePoly = null;
+        }
+        this.vertices = [];
+        if (this.map) {
+          this.map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+        }
+        showDrawingHelper(false);
+      }
+    }
+
+    function showDrawingHelper(show) {
+      const helper = document.getElementById("drawing-helper");
+      if (helper) helper.style.display = show ? "flex" : "none";
+      updateDrawingInstructions(0);
+    }
+
+    function updateDrawingInstructions(count) {
+      const instructions = document.getElementById("drawing-instructions");
+      const btnFinish = document.getElementById("btn-finish-calco");
+      if (instructions) {
+        instructions.innerText = `Clic en mapa para fijar vértices (${count} marcados). Doble clic para cerrar.`;
+      }
+      if (btnFinish) {
+        btnFinish.disabled = count < 3;
+      }
+    }
+
+    function updateOverlayUI() {
+      const counter = document.getElementById("calcos-counter");
+      const btnEliminar = document.getElementById("btn-eliminar");
+      if (counter) {
+        counter.textContent = `${overlaysList.length} ${overlaysList.length === 1 ? 'calco' : 'calcos'}`;
+      }
+      if (btnEliminar) {
+        btnEliminar.disabled = overlaysList.length === 0;
+      }
+    }
+
+    function resetBtnStyles() {
+      const btnRestringido = document.getElementById("btn-restringido");
+      const btnSevero = document.getElementById("btn-severo");
+      if (btnRestringido) btnRestringido.classList.remove("active-restringido");
+      if (btnSevero) btnSevero.classList.remove("active-severo");
+      currentDrawingType = null;
+    }
+
+    function resetTerrenoClaveState() {
+      modoTerrenoClave = false;
+      const btnClave = document.getElementById("btn-terreno-clave");
+      const instructions = document.getElementById("clave-instructions");
+      if (btnClave) btnClave.classList.remove("active-clave");
+      if (instructions) instructions.style.display = "none";
+      if (map) map.setOptions({ draggableCursor: null });
+    }
+
+    function initMap() {
+      const cochabamba = { lat: -17.3895, lng: -66.1568 };
+
+      const mapOptions = {
+        center: cochabamba,
+        zoom: 10,
+        mapTypeId: "terrain",
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle ? google.maps.MapTypeControlStyle.DROPDOWN_MENU : 1,
+          position: google.maps.ControlPosition ? google.maps.ControlPosition.TOP_RIGHT : 2
+        },
+        zoomControl: true,
+        scaleControl: true,
+        streetViewControl: false,
+        rotateControl: false,
+        fullscreenControl: true
+      };
+
+      const mapElement = document.getElementById("map");
+      map = new google.maps.Map(mapElement, mapOptions);
+
+      // Gestor CMOC
+      drawingManager = new TacticalDrawingManager(map);
+      drawingManager.addListener("overlaycomplete", function (event) {
+        if (event.overlay) {
+          overlaysList.push(event.overlay);
+          updateOverlayUI();
+        }
+        drawingManager.setDrawingMode(null);
+        resetBtnStyles();
+      });
+
+      // Requisito 3: 'event listener' global al mapa para el evento click (Terreno Clave)
+      map.addListener("click", function (event) {
+        if (modoTerrenoClave && event.latLng) {
+          // Instanciar google.maps.Marker en esa coordenada con el icono SVG morado
+          new google.maps.Marker({
+            position: event.latLng,
+            map: map,
+            icon: {
+              url: TERRENO_CLAVE_ICON_URI,
+              scaledSize: new google.maps.Size(32, 32),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(16, 16)
+            },
+            title: "Terreno Clave (C)"
+          });
+
+          // Inmediatamente después devuelve modoTerrenoClave a false y restaura el cursor
+          resetTerrenoClaveState();
+        }
+      });
+
+      setupCMOCControls();
+      setupTerrenoClaveControls();
+
+      const loader = document.getElementById("map-loader");
+      if (loader) {
+        loader.style.display = "none";
+      }
+    }
+
+    function setupCMOCControls() {
+      const btnRestringido = document.getElementById("btn-restringido");
+      const btnSevero = document.getElementById("btn-severo");
+      const btnEliminar = document.getElementById("btn-eliminar");
+      const btnFinish = document.getElementById("btn-finish-calco");
+      const btnCancel = document.getElementById("btn-cancel-calco");
+
+      btnRestringido.addEventListener("click", function () {
+        if (!drawingManager) return;
+        resetTerrenoClaveState();
+
+        if (currentDrawingType === "restringido") {
+          drawingManager.setDrawingMode(null);
+          resetBtnStyles();
+          return;
+        }
+
+        resetBtnStyles();
+        btnRestringido.classList.add("active-restringido");
+        currentDrawingType = "restringido";
+
+        drawingManager.setOptions({
+          drawingMode: "polygon",
+          polygonOptions: {
+            strokeColor: "#FFC107",
+            strokeWeight: 2,
+            fillColor: "#FFC107",
+            fillOpacity: 0.4
+          }
+        });
+      });
+
+      btnSevero.addEventListener("click", function () {
+        if (!drawingManager) return;
+        resetTerrenoClaveState();
+
+        if (currentDrawingType === "severo") {
+          drawingManager.setDrawingMode(null);
+          resetBtnStyles();
+          return;
+        }
+
+        resetBtnStyles();
+        btnSevero.classList.add("active-severo");
+        currentDrawingType = "severo";
+
+        drawingManager.setOptions({
+          drawingMode: "polygon",
+          polygonOptions: {
+            strokeColor: "#F44336",
+            strokeWeight: 2,
+            fillColor: "#F44336",
+            fillOpacity: 0.4
+          }
+        });
+      });
+
+      btnEliminar.addEventListener("click", function () {
+        if (overlaysList.length === 0) return;
+
+        const ultimoCalco = overlaysList.pop();
+        if (ultimoCalco && typeof ultimoCalco.setMap === "function") {
+          ultimoCalco.setMap(null);
+        }
+        updateOverlayUI();
+      });
+
+      if (btnFinish) {
+        btnFinish.addEventListener("click", function () {
+          if (drawingManager) drawingManager.finish();
+        });
+      }
+
+      if (btnCancel) {
+        btnCancel.addEventListener("click", function () {
+          if (drawingManager) drawingManager.setDrawingMode(null);
+          resetBtnStyles();
+        });
+      }
+    }
+
+    // Requisito 1 y 3: Control e interacción de Terreno Clave
+    function setupTerrenoClaveControls() {
+      const btnClave = document.getElementById("btn-terreno-clave");
+      const instructions = document.getElementById("clave-instructions");
+
+      btnClave.addEventListener("click", function () {
+        if (!map) return;
+
+        // Si ya estaba activo, desactivar
+        if (modoTerrenoClave) {
+          resetTerrenoClaveState();
+          return;
+        }
+
+        // Desactivar dibujo CMOC para evitar conflictos (Requisito 4)
+        if (drawingManager) {
+          drawingManager.setDrawingMode(null);
+        }
+        resetBtnStyles();
+
+        // Activar modo Terreno Clave y cambiar cursor a 'crosshair'
+        modoTerrenoClave = true;
+        btnClave.classList.add("active-clave");
+        if (instructions) instructions.style.display = "block";
+        map.setOptions({ draggableCursor: "crosshair" });
+      });
+    }
+
+    (function loadGoogleMapsScript() {
+      window.gm_authFailure = function () {
+        const loader = document.getElementById("map-loader");
+        if (loader) {
+          loader.innerText = "ERROR DE AUTENTICACIÓN GOOGLE MAPS (gm_authFailure). VERIFIQUE RESTRICCIONES DE CLAVE.";
+          loader.style.color = "#c86d6d";
+        }
+      };
+
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = function () {
+        const loader = document.getElementById("map-loader");
+        if (loader) {
+          loader.innerText = "ERROR AL CARGAR GOOGLE MAPS API. VERIFIQUE SU CONEXIÓN O API KEY.";
+          loader.style.color = "#c86d6d";
+        }
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
+</body>
+</html>

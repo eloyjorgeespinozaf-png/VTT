@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor Táctico de Terreno - VTT (Fase 12: Áreas de Interés Nombradas - AIN)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #121613;
+      color: #d6dfd5;
+    }
+
+    .vtt-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 1. Panel Lateral Izquierdo: 25% del ancho */
+    .sidebar {
+      width: 25%;
+      min-width: 280px;
+      max-width: 420px;
+      height: 100vh;
+      background-color: #161b17;
+      border-right: 1px solid #2e3a2f;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #2e3a2f;
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #e4eee3;
+      text-transform: uppercase;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .sidebar-header p {
+      font-size: 11px;
+      color: #7b8e7a;
+      margin-top: 4px;
+      font-family: "Courier New", Courier, monospace;
+      text-transform: uppercase;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .module-card {
+      background-color: #1a201a;
+      border: 1px solid #2d382d;
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .module-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2d382d;
+      padding-bottom: 8px;
+    }
+
+    .module-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a6b9a4;
+      font-family: "Courier New", Courier, monospace;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .module-badge {
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      background-color: #131913;
+      color: #8fa38e;
+      border: 1px solid #2d3a2e;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .layer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background-color: #151c16;
+      border: 1px solid #2d382d;
+      border-radius: 3px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s;
+    }
+
+    .layer-item:hover {
+      background-color: #1e261f;
+    }
+
+    .layer-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-item input[type="checkbox"] {
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+      accent-color: #81c784;
+    }
+
+    .layer-label {
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      color: #d6dfd5;
+    }
+
+    .layer-count {
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      color: #7e8f7c;
+    }
+
+    .color-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .color-restringido {
+      background-color: #FFC107;
+    }
+
+    .color-severo {
+      background-color: #F44336;
+    }
+
+    .color-clave-icon {
+      width: 14px;
+      height: 14px;
+      border: 1px solid #ab47bc;
+      border-radius: 50%;
+      color: #ce93d8;
+      font-size: 8px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      flex-shrink: 0;
+    }
+
+    .color-propias {
+      background-color: #2196F3;
+    }
+
+    .color-empeno {
+      background-color: #FF9800;
+    }
+
+    .color-defendible {
+      background-color: #2196F3;
+    }
+
+    .color-ain {
+      background-color: #4CAF50;
+    }
+
+    .color-bav {
+      width: 12px;
+      height: 12px;
+      background-color: #D32F2F;
+      border: 1px solid #1A1A1A;
+      transform: rotate(45deg);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .cmoc-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-tactical {
+      background-color: #151c16;
+      border: 1px solid #313f32;
+      color: #d6dfd5;
+      padding: 8px 10px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      text-align: left;
+      width: 100%;
+    }
+
+    .btn-tactical:hover {
+      background-color: #1e261f;
+      border-color: #415343;
+    }
+
+    .btn-content-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-delete {
+      background-color: #231617;
+      border: 1px solid #482628;
+      color: #df9e9f;
+      padding: 8px 10px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+
+    .btn-delete:hover:not(:disabled) {
+      background-color: #311c1e;
+      border-color: #683437;
+    }
+
+    .btn-delete:disabled {
+      background-color: #151815;
+      border-color: #232a23;
+      color: #4e5c4d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .active-restringido {
+      background-color: #2a301e !important;
+      border-color: #FFC107 !important;
+      color: #ffe082 !important;
+    }
+
+    .active-severo {
+      background-color: #311c1d !important;
+      border-color: #F44336 !important;
+      color: #ffcdd2 !important;
+    }
+
+    .active-clave {
+      background-color: #27172e !important;
+      border-color: #9c27b0 !important;
+      color: #e1bee7 !important;
+    }
+
+    .active-propias {
+      background-color: #122233 !important;
+      border-color: #2196F3 !important;
+      color: #90caf9 !important;
+    }
+
+    .active-enemigo {
+      background-color: #311c1d !important;
+      border-color: #F44336 !important;
+      color: #ffcdd2 !important;
+    }
+
+    .active-empeno {
+      background-color: #332213 !important;
+      border-color: #FF9800 !important;
+      color: #ffcc80 !important;
+    }
+
+    .active-defendible {
+      background-color: #132333 !important;
+      border-color: #2196F3 !important;
+      color: #90caf9 !important;
+    }
+
+    .active-ain {
+      background-color: #182a1b !important;
+      border-color: #4CAF50 !important;
+      color: #a5d6a7 !important;
+    }
+
+    .active-bav {
+      background-color: #331517 !important;
+      border-color: #d32f2f !important;
+      color: #ff8a80 !important;
+    }
+
+    .active-orografia {
+      background-color: #18261e !important;
+      border-color: #81c784 !important;
+      color: #c8e6c9 !important;
+    }
+
+    .active-regla {
+      background-color: #2e2a14 !important;
+      border-color: #FFFF00 !important;
+      color: #fff59d !important;
+    }
+
+    .tactical-select {
+      background-color: #151c16;
+      border: 1px solid #313f32;
+      color: #d6dfd5;
+      padding: 6px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .tactical-select:focus {
+      border-color: #81c784;
+    }
+
+    .drawing-helper {
+      background-color: #121613;
+      border: 1px solid #2d382d;
+      border-radius: 3px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      color: #a4b5a2;
+    }
+
+    .drawing-helper-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .btn-helper {
+      flex: 1;
+      padding: 4px 6px;
+      border-radius: 2px;
+      font-size: 10px;
+      font-family: "Courier New", Courier, monospace;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-helper-finish {
+      background-color: #233324;
+      border-color: #3e5a40;
+      color: #c5e1c4;
+    }
+
+    .btn-helper-finish:disabled {
+      background-color: #182019;
+      border-color: #242f25;
+      color: #556454;
+      cursor: not-allowed;
+    }
+
+    .btn-helper-cancel {
+      background-color: #241a1a;
+      border-color: #442828;
+      color: #dca6a6;
+    }
+
+    /* Tabla CC.MM. */
+    .table-ccmm-container {
+      overflow-x: auto;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .table-ccmm {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #313f32;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10px;
+      text-align: center;
+      user-select: none;
+      min-width: 340px;
+    }
+
+    .table-ccmm th, .table-ccmm td {
+      border: 1px solid #313f32;
+      padding: 3px 2px;
+    }
+
+    .table-ccmm th {
+      background-color: #141a15;
+      color: #a6b9a4;
+      font-weight: 600;
+    }
+
+    .table-ccmm th.sub-a {
+      color: #90caf9;
+      width: 22px;
+      font-size: 9px;
+    }
+
+    .table-ccmm th.sub-e {
+      color: #ef9a9a;
+      width: 22px;
+      font-size: 9px;
+    }
+
+    .table-ccmm td.col-sistema {
+      background-color: #141a15;
+      color: #d6dfd5;
+      text-align: left;
+      padding-left: 6px;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .celda-ccmm {
+      cursor: pointer;
+      transition: background-color 0.15s;
+      font-weight: bold;
+      font-size: 9px;
+      height: 20px;
+      color: #556655;
+    }
+
+    .sidebar-footer {
+      padding-top: 12px;
+      margin-top: 16px;
+      border-top: 1px solid #2e3a2f;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10px;
+      color: #657764;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    /* 2. Visor Geográfico: 75% del ancho */
+    .map-container {
+      width: 75%;
+      height: 100vh;
+      position: relative;
+      background-color: #101411;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-loader {
+      position: absolute;
+      inset: 0;
+      background-color: #141814;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #829281;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="vtt-container">
+    <!-- Panel Lateral Izquierdo (25% del ancho) -->
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <h1>VISOR TÁCTICO DE TERRENO - VTT</h1>
+        <p>Fase 12: Áreas de Interés Nombradas (AIN) y Análisis Táctico</p>
+      </header>
+
+      <section class="sidebar-content">
+        <!-- Gestor de Capas (CMOC) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#81c784;"></span>
+              Gestor de Capas (CMOC)
+            </span>
+            <span class="module-badge">VISIBILIDAD</span>
+          </div>
+
+          <div class="layer-list">
+            <!-- 1. Terreno Restringido -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-restringido" checked />
+                <span class="color-indicator color-restringido"></span>
+                <span class="layer-label">Terreno Restringido</span>
+              </div>
+              <span id="count-restringido" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 2. Terreno Severamente Restringido -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-severo" checked />
+                <span class="color-indicator color-severo"></span>
+                <span class="layer-label">Terreno Sever. Restringido</span>
+              </div>
+              <span id="count-severo" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 3. Terreno Clave -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-clave" checked />
+                <span class="color-clave-icon">C</span>
+                <span class="layer-label">Terreno Clave</span>
+              </div>
+              <span id="count-clave" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 4. AA Propias -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-aa-propias" checked />
+                <span class="color-indicator color-propias"></span>
+                <span class="layer-label">AA Propias (Azul)</span>
+              </div>
+              <span id="count-aa-propias" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 5. AA Enemigo -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-aa-enemigo" checked />
+                <span class="color-indicator color-severo"></span>
+                <span class="layer-label">AA Enemigo (Rojo)</span>
+              </div>
+              <span id="count-aa-enemigo" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 6. Área de Empeño (AE) -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-area-empeno" checked />
+                <span class="color-indicator color-empeno"></span>
+                <span class="layer-label">Área de Empeño (AE)</span>
+              </div>
+              <span id="count-area-empeno" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 7. Terreno Defendible -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-terreno-defendible" checked />
+                <span class="color-indicator color-defendible"></span>
+                <span class="layer-label">Terreno Defendible</span>
+              </div>
+              <span id="count-terreno-defendible" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 8. Áreas de Interés Nombradas (AIN) - Fase 12 -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-ain" checked />
+                <span class="color-indicator color-ain"></span>
+                <span class="layer-label">Áreas de Interés Nombradas (AIN)</span>
+              </div>
+              <span id="count-ain" class="layer-count">[0]</span>
+            </label>
+
+            <!-- 9. Blancos de Alto Valor (BAV) -->
+            <label class="layer-item">
+              <div class="layer-item-left">
+                <input type="checkbox" id="chk-bav" checked />
+                <span class="color-bav"></span>
+                <span class="layer-label">Blancos de Alto Valor (BAV)</span>
+              </div>
+              <span id="count-bav" class="layer-count">[0]</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Módulo 1: Calcos de Obstáculos Combinados (CMOC) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Calcos de Obstáculos (CMOC)</span>
+            <span id="badge-overlays" class="module-badge">0 CALCOS</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-restringido" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-restringido"></span>
+                <span>Trazar Terreno Restringido</span>
+              </div>
+            </button>
+
+            <button id="btn-severo" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-severo"></span>
+                <span>Trazar Terreno Severamente Restringido</span>
+              </div>
+            </button>
+
+            <button id="btn-eliminar" class="btn-delete" type="button" disabled>
+              Eliminar último calco
+            </button>
+          </div>
+        </div>
+
+        <!-- Módulo 2: Terreno Clave (Fase 3) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Terreno Clave</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-terreno-clave" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-clave-icon">C</span>
+                <span>Marcar Terreno Clave</span>
+              </div>
+            </button>
+
+            <div id="clave-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #ce93d8; background-color: #201323; padding: 6px; border: 1px solid #4a148c; border-radius: 2px;">
+              Haga clic en el mapa para colocar el símbolo de Terreno Clave (C).
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo 3: Direcciones de Aproximación (Fase 4) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Direcciones de Aproximación</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-aa-propias" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-propias"></span>
+                <span>Trazar AA Propias (Azul)</span>
+              </div>
+            </button>
+
+            <button id="btn-aa-enemigo" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-severo"></span>
+                <span>Trazar AA Enemigo (Rojo)</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 7 y 12: Áreas Tácticas -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Áreas Tácticas</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-area-empeno" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-empeno"></span>
+                <span>Trazar Área de Empeño (Naranja)</span>
+              </div>
+            </button>
+
+            <button id="btn-terreno-defendible" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-defendible"></span>
+                <span>Trazar Terreno Defendible (Azul)</span>
+              </div>
+            </button>
+
+            <!-- Botón Fase 12: Trazar AIN (Verde) -->
+            <button id="btn-trazar-ain" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-indicator color-ain"></span>
+                <span>Trazar AIN (Verde)</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 8: Blancos de Alto Valor (BAV) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Blancos de Alto Valor (BAV)</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-bav" style="font-size: 10px; font-family: 'Courier New', monospace; color: #7e8f7c; text-transform: uppercase;">
+                Tipo de Blanco Táctico:
+              </label>
+              <select id="select-bav" class="tactical-select">
+                <option value="c4">Puesto Comando C4</option>
+                <option value="art">Artillería</option>
+                <option value="ada">Defensa Antiaérea ADA</option>
+                <option value="log">Logística/Munición</option>
+              </select>
+            </div>
+
+            <button id="btn-bav" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span class="color-bav"></span>
+                <span>Marcar BAV</span>
+              </div>
+            </button>
+
+            <div id="bav-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #ff8a80; background-color: #241214; padding: 6px; border: 1px solid #5c1c1f; border-radius: 2px;">
+              Haga clic en el mapa para colocar el símbolo del Blanco de Alto Valor (BAV) seleccionado.
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 10: Análisis CARVER (BAV) -->
+        <div id="panelCarver" class="module-card" style="display: none;">
+          <div class="module-header-row">
+            <span class="module-title">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#d32f2f;"></span>
+              Análisis CARVER (BAV)
+            </span>
+            <button id="btn-close-carver" type="button" style="background:none; border:none; color:#7e8f7c; cursor:pointer; font-family:'Courier New',monospace; font-size:10px;">✕ Cerrar</button>
+          </div>
+
+          <div class="cmoc-controls">
+            <!-- Select 1: Crítico (C) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-c" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Crítico (C)
+              </label>
+              <select id="select-carver-c" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 2: Accesibilidad (A) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-a" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Accesibilidad (A)
+              </label>
+              <select id="select-carver-a" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 3: Recuperabilidad (R) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-r" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Recuperabilidad (R)
+              </label>
+              <select id="select-carver-r" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 4: Vulnerabilidad (V) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-v" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Vulnerabilidad (V)
+              </label>
+              <select id="select-carver-v" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 5: Efectividad (E) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-e" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Efectividad (E)
+              </label>
+              <select id="select-carver-e" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Select 6: Reconocible (R) -->
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="select-carver-rec" style="font-size: 10px; font-family: 'Courier New', monospace; color: #a6b9a4; text-transform: uppercase;">
+                Reconocible (R)
+              </label>
+              <select id="select-carver-rec" class="tactical-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+
+            <!-- Botón: Calcular Valor Relativo -->
+            <button id="btn-calcular-carver" class="btn-tactical" type="button" style="background-color: #243526; border-color: #415e43; color: #c5e1c4; justify-content: center; font-weight: bold; margin-top: 4px;">
+              CALCULAR VALOR RELATIVO
+            </button>
+
+            <!-- div resultadoCarver -->
+            <div id="resultadoCarver" style="margin-top: 4px; padding: 8px; background-color: #121613; border: 1px solid #2d382d; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 11px; min-height: 28px;"></div>
+          </div>
+        </div>
+
+        <!-- Módulo 4: Análisis de Orografía (Fase 5) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Análisis de Orografía</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <button id="btn-orografia" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span style="color: #81c784;">▲</span>
+                <span>Consultar Altitud (Cota)</span>
+              </div>
+            </button>
+
+            <div id="orografia-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #a5d6a7; background-color: #142016; padding: 6px; border: 1px solid #233f26; border-radius: 2px;">
+              Haga clic en cualquier punto del mapa para consultar su altitud topográfica y coordenadas.
+            </div>
+
+            <div id="orografia-readout" style="display: none; padding: 8px; background-color: #121613; border: 1px solid #2d382d; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 11px; color: #d6dfd5;"></div>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 9: Cálculo de Marcha (LFT) -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">Cálculo de Marcha (LFT)</span>
+          </div>
+
+          <div class="cmoc-controls">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label for="selectVelocidad" style="font-size: 10px; font-family: 'Courier New', monospace; color: #7e8f7c; text-transform: uppercase;">
+                Velocidad Doctrinal:
+              </label>
+              <select id="selectVelocidad" class="tactical-select">
+                <option value="4">Inf. - Sin Restricción (4 km/h)</option>
+                <option value="2">Inf. - Restringido (2 km/h)</option>
+                <option value="1">Inf. - Sev. Restringido (1 km/h)</option>
+              </select>
+            </div>
+
+            <button id="btn-medir-ruta" class="btn-tactical" type="button">
+              <div class="btn-content-left">
+                <span style="color: #FFFF00;">📏</span>
+                <span>Medir Ruta (Regla)</span>
+              </div>
+            </button>
+
+            <div id="regla-instructions" style="display: none; font-size: 11px; font-family: 'Courier New', monospace; color: #fff59d; background-color: #221f11; padding: 6px; border: 1px solid #52491a; border-radius: 2px;">
+              Trace la ruta en el mapa con clics sucesivos. Doble clic para finalizar el cálculo.
+            </div>
+
+            <div id="resultadoMarcha" style="padding: 8px; background-color: #121613; border: 1px solid #2d382d; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 11px; color: #d6dfd5; min-height: 28px;">
+              <span style="color: #657764; font-style: italic;">Trace una ruta con la regla para calcular marcha...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Módulo Fase 11: Efectos CC.MM. en Operaciones -->
+        <div class="module-card">
+          <div class="module-header-row">
+            <span class="module-title">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#81c784;"></span>
+              Efectos CC.MM. en Operaciones
+            </span>
+            <button id="btn-reset-ccmm" type="button" style="background:none; border:1px solid #2e3a2f; border-radius:2px; color:#7e8f7c; cursor:pointer; font-family:'Courier New',monospace; font-size:10px; padding:1px 5px;">Limpiar</button>
+          </div>
+
+          <p style="font-size: 10px; font-family: 'Courier New', monospace; color: #7e8f7c; margin-bottom: 2px;">
+            Clic en cada celda para alternar semaforización (Sin evaluar → Favorable → Marginal → Desfavorable).
+          </p>
+
+          <!-- Contenedor con overflow-x: auto -->
+          <div class="table-ccmm-container">
+            <table class="table-ccmm">
+              <thead>
+                <!-- Nivel 1: 5 factores climáticos abarcando 2 columnas (colspan="2") -->
+                <tr>
+                  <th rowspan="2" style="text-align:left; padding-left:4px; min-width:70px;">Sistema</th>
+                  <th colspan="2">Visibilidad</th>
+                  <th colspan="2">Vientos</th>
+                  <th colspan="2">Precipitación</th>
+                  <th colspan="2">Nubosidad</th>
+                  <th colspan="2">Temp/Hum</th>
+                </tr>
+                <!-- Nivel 2: Subcolumnas A (Amigas) y E (Enemigas) -->
+                <tr>
+                  <th class="sub-a" title="Fuerzas Amigas (A)">A</th>
+                  <th class="sub-e" title="Fuerzas Enemigas (E)">E</th>
+                  <th class="sub-a" title="Fuerzas Amigas (A)">A</th>
+                  <th class="sub-e" title="Fuerzas Enemigas (E)">E</th>
+                  <th class="sub-a" title="Fuerzas Amigas (A)">A</th>
+                  <th class="sub-e" title="Fuerzas Enemigas (E)">E</th>
+                  <th class="sub-a" title="Fuerzas Amigas (A)">A</th>
+                  <th class="sub-e" title="Fuerzas Enemigas (E)">E</th>
+                  <th class="sub-a" title="Fuerzas Amigas (A)">A</th>
+                  <th class="sub-e" title="Fuerzas Enemigas (E)">E</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 8 Filas Doctrinales -->
+                <tr>
+                  <td class="col-sistema">Personal</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Personal" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">Blindados</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Blindados" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">Artillería</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Artillería" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">ADA</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="ADA" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">Ingeniería</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Ingeniería" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">Inteligencia</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Inteligencia" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">C3</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="C3" data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+                <tr>
+                  <td class="col-sistema">Líneas Com.</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Visibilidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Visibilidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Vientos" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Vientos" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Precipitación" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Precipitación" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Nubosidad" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Nubosidad" data-lado="E">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Temp/Hum" data-lado="A">-</td>
+                  <td class="celda-ccmm" data-sistema="Líneas Com." data-factor="Temp/Hum" data-lado="E">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Leyenda de semaforización -->
+          <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #2d382d; display: flex; flex-wrap: wrap; gap: 8px; font-family: 'Courier New', monospace; font-size: 9px; color: #8fa38e;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #313f32; text-align: center; line-height: 8px; color: #556655;">-</span>
+              <span>Sin evaluar</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="display: inline-block; width: 10px; height: 10px; background-color: #4CAF50; border-radius: 2px;"></span>
+              <span style="color: #a5d6a7;">Favorable</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="display: inline-block; width: 10px; height: 10px; background-color: #FFC107; border-radius: 2px;"></span>
+              <span style="color: #ffe082;">Marginal</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="display: inline-block; width: 10px; height: 10px; background-color: #F44336; border-radius: 2px;"></span>
+              <span style="color: #ef9a9a;">Desfavorable</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel auxiliar de trazado interactivo -->
+        <div id="drawing-helper" class="drawing-helper" style="display: none;">
+          <div id="drawing-instructions">Clic en mapa para fijar vértices. Doble clic para finalizar.</div>
+          <div class="drawing-helper-actions">
+            <button id="btn-finish-drawing" class="btn-helper btn-helper-finish" type="button" disabled>Finalizar Trazo</button>
+            <button id="btn-cancel-drawing" class="btn-helper btn-helper-cancel" type="button">Cancelar</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="sidebar-footer">
+        <div>ZONA: COCHABAMBA [BOLIVIA]</div>
+        <div>COORD: -17.3895, -66.1568</div>
+        <div>TIPO MAPA: TOPOGRÁFICO (TERRAIN)</div>
+        <div id="status-cmoc">ESTADO: OPERATIVO</div>
+      </footer>
+    </aside>
+
+    <!-- Visor Geográfico Principal (75% del ancho) -->
+    <main class="map-container">
+      <div id="map-loader" class="map-loader">Iniciando Visor Táctico de Terreno (Fase 12)...</div>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script>
+    const GOOGLE_MAPS_API_KEY = 'AIzaSyArX4Pk4ne8TFwNakOayp3IijHCJo4KtzM';
+
+    // Fases 6, 7, 8 y 12: Arrays para almacenamiento de calcos por capa
+    const capaRestringido = [];
+    const capaSevero = [];
+    const capaClave = [];
+    const capaAAPropias = [];
+    const capaAAEnemigo = [];
+    const capaAE = [];
+    const capaDefendible = [];
+    const capaBAV = [];
+    const capaAIN = [];
+    let contadorAIN = 1;
+
+    // Fase 9: Variables de regla y cálculo de marcha
+    let reglaActiva = false;
+    let lineaRegla = null;
+
+    // Estados de visibilidad
+    const visibilidad = {
+      restringido: true,
+      severo: true,
+      clave: true,
+      aaPropias: true,
+      aaEnemigo: true,
+      areaEmpeno: true,
+      terrenoDefendible: true,
+      ain: true,
+      bav: true
+    };
+
+    // Pila general para deshacer calcos
+    const overlaysStack = [];
+
+    // Modo activo
+    let activeTool = null;
+    let modoClave = false;
+    let modoOrografia = false;
+    let modoBAV = false;
+
+    // Vertices del trazo actual
+    let currentVertices = [];
+    let previewPolyline = null;
+    let previewPolygon = null;
+
+    // Fase 8: Símbolos SVG dinámicos para Blancos de Alto Valor (BAV)
+    function getBAVSymbolDataUri(tipo) {
+      let label = 'C';
+      let fontSize = '13';
+      if (tipo === 'c4') {
+        label = 'C';
+        fontSize = '13';
+      } else if (tipo === 'art') {
+        label = 'Ar';
+        fontSize = '11';
+      } else if (tipo === 'ada') {
+        label = 'AA';
+        fontSize = '10.5';
+      } else if (tipo === 'log') {
+        label = 'L';
+        fontSize = '13';
+      }
+
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+        <polygon points="15,2 28,15 15,28 2,15" fill="#D32F2F" stroke="#1A1A1A" stroke-width="2" stroke-linejoin="round" />
+        <text x="15" y="16" font-family="'Courier New', Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
+      </svg>`;
+
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    }
+
+    // Actualizar conteos en la UI
+    function syncLayerCountsUI() {
+      const elR = document.getElementById('count-restringido');
+      if (elR) elR.innerText = `[${capaRestringido.length}]`;
+
+      const elS = document.getElementById('count-severo');
+      if (elS) elS.innerText = `[${capaSevero.length}]`;
+
+      const elC = document.getElementById('count-clave');
+      if (elC) elC.innerText = `[${capaClave.length}]`;
+
+      const elAAP = document.getElementById('count-aa-propias');
+      if (elAAP) elAAP.innerText = `[${capaAAPropias.length}]`;
+
+      const elAAE = document.getElementById('count-aa-enemigo');
+      if (elAAE) elAAE.innerText = `[${capaAAEnemigo.length}]`;
+
+      const elAE = document.getElementById('count-area-empeno');
+      if (elAE) elAE.innerText = `[${capaAE.length}]`;
+
+      const elTD = document.getElementById('count-terreno-defendible');
+      if (elTD) elTD.innerText = `[${capaDefendible.length}]`;
+
+      const elAIN = document.getElementById('count-ain');
+      if (elAIN) {
+        const cantPoligonosAIN = capaAIN.filter(item => typeof item.getPath === 'function').length;
+        elAIN.innerText = `[${cantPoligonosAIN}]`;
+      }
+
+      const elBAV = document.getElementById('count-bav');
+      if (elBAV) elBAV.innerText = `[${capaBAV.length}]`;
+
+      const badge = document.getElementById('badge-overlays');
+      if (badge) badge.innerText = `${overlaysStack.length} CALCOS`;
+
+      const btnEliminar = document.getElementById('btn-eliminar');
+      if (btnEliminar) btnEliminar.disabled = overlaysStack.length === 0;
+    }
+
+    function initMap() {
+      const loader = document.getElementById('map-loader');
+      if (loader) loader.style.display = 'none';
+
+      const cochabamba = { lat: -17.3895, lng: -66.1568 };
+      const map = new google.maps.Map(document.getElementById('map'), {
+        center: cochabamba,
+        zoom: 10,
+        mapTypeId: 'terrain',
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+          position: google.maps.ControlPosition.TOP_RIGHT
+        },
+        zoomControl: true,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+
+      const elevator = new google.maps.ElevationService();
+      const infoWindow = new google.maps.InfoWindow();
+
+      // Desactivar todos los modos activos
+      function deactivateAll() {
+        activeTool = null;
+        modoClave = false;
+        modoOrografia = false;
+        modoBAV = false;
+        reglaActiva = false;
+
+        map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+
+        document.getElementById('btn-restringido')?.classList.remove('active-restringido');
+        document.getElementById('btn-severo')?.classList.remove('active-severo');
+        document.getElementById('btn-terreno-clave')?.classList.remove('active-clave');
+        document.getElementById('btn-aa-propias')?.classList.remove('active-propias');
+        document.getElementById('btn-aa-enemigo')?.classList.remove('active-enemigo');
+        document.getElementById('btn-area-empeno')?.classList.remove('active-empeno');
+        document.getElementById('btn-terreno-defendible')?.classList.remove('active-defendible');
+        document.getElementById('btn-trazar-ain')?.classList.remove('active-ain');
+        document.getElementById('btn-bav')?.classList.remove('active-bav');
+        document.getElementById('btn-orografia')?.classList.remove('active-orografia');
+        document.getElementById('btn-medir-ruta')?.classList.remove('active-regla');
+
+        const claveInst = document.getElementById('clave-instructions');
+        if (claveInst) claveInst.style.display = 'none';
+
+        const bavInst = document.getElementById('bav-instructions');
+        if (bavInst) bavInst.style.display = 'none';
+
+        const orografiaInst = document.getElementById('orografia-instructions');
+        if (orografiaInst) orografiaInst.style.display = 'none';
+
+        const reglaInst = document.getElementById('regla-instructions');
+        if (reglaInst) reglaInst.style.display = 'none';
+
+        const helper = document.getElementById('drawing-helper');
+        if (helper) helper.style.display = 'none';
+
+        if (previewPolyline) {
+          previewPolyline.setMap(null);
+          previewPolyline = null;
+        }
+        if (previewPolygon) {
+          previewPolygon.setMap(null);
+          previewPolygon = null;
+        }
+        currentVertices = [];
+      }
+
+      function updateDrawingHelper() {
+        const helper = document.getElementById('drawing-helper');
+        const instructions = document.getElementById('drawing-instructions');
+        const finishBtn = document.getElementById('btn-finish-drawing');
+
+        if (!activeTool || modoClave || modoOrografia || modoBAV) {
+          if (helper) helper.style.display = 'none';
+          return;
+        }
+
+        if (helper) helper.style.display = 'flex';
+        const isPolyline = activeTool === 'aa_propias' || activeTool === 'aa_enemigo' || activeTool === 'medir_ruta';
+        const minReq = isPolyline ? 2 : 3;
+
+        if (instructions) {
+          instructions.innerText = `Clic en mapa para fijar vértices (${currentVertices.length} marcados). Doble clic para finalizar.`;
+        }
+        if (finishBtn) {
+          finishBtn.disabled = currentVertices.length < minReq;
+          finishBtn.innerText = `Finalizar Trazo (${currentVertices.length}/${minReq})`;
+        }
+      }
+
+      // Finalizar trazo en curso
+      function finishCurrentDrawing() {
+        if (!activeTool) return;
+        const isPolyline = activeTool === 'aa_propias' || activeTool === 'aa_enemigo' || activeTool === 'medir_ruta';
+
+        if (isPolyline && currentVertices.length >= 2) {
+          if (activeTool === 'medir_ruta') {
+            const rutaRegla = new google.maps.Polyline({
+              path: [...currentVertices],
+              strokeColor: '#FFFF00',
+              strokeOpacity: 0.95,
+              strokeWeight: 4,
+              map: map,
+              zIndex: 10
+            });
+
+            if (lineaRegla && typeof lineaRegla.setMap === 'function') {
+              lineaRegla.setMap(null);
+            }
+            lineaRegla = rutaRegla;
+
+            if (google.maps.geometry && google.maps.geometry.spherical) {
+              const distanciaMetros = google.maps.geometry.spherical.computeLength(rutaRegla.getPath());
+              const distanciaKm = (distanciaMetros / 1000).toFixed(2);
+              const selectVel = document.getElementById('selectVelocidad');
+              const velocidad = parseFloat(selectVel ? selectVel.value : '4');
+              const tiempoDecimal = parseFloat(distanciaKm) / velocidad;
+              let horas = Math.floor(tiempoDecimal);
+              let minutos = Math.round((tiempoDecimal - horas) * 60);
+              if (minutos === 60) {
+                horas += 1;
+                minutos = 0;
+              }
+
+              const resMarcha = document.getElementById('resultadoMarcha');
+              if (resMarcha) {
+                resMarcha.innerHTML = `
+                  <div style="font-weight: bold; color: #FFFF00; margin-bottom: 4px;">DISTANCIA: ${distanciaKm} km</div>
+                  <div style="color: #e2ede1;">TIEMPO EST.: ${horas}h ${minutos}m <span style="color: #8fa38e; font-size: 10px;">(${velocidad} km/h)</span></div>
+                `;
+              }
+            }
+
+            // Inmediatamente después del cálculo, elimina la línea del mapa para no ensuciar
+            rutaRegla.setMap(null);
+            lineaRegla = null;
+          } else {
+            const isPropias = activeTool === 'aa_propias';
+            const color = isPropias ? '#2196F3' : '#F44336';
+            const arrowIcon = {
+              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+              scale: 3,
+              strokeColor: color,
+              fillColor: color,
+              fillOpacity: 1,
+              strokeWeight: 1.5
+            };
+
+            const finalizedPolyline = new google.maps.Polyline({
+              path: [...currentVertices],
+              strokeColor: color,
+              strokeWeight: 4,
+              strokeOpacity: 0.8,
+              icons: [{ icon: arrowIcon, offset: '100%', repeat: '0px' }],
+              zIndex: 4,
+              map: map
+            });
+
+            overlaysStack.push(finalizedPolyline);
+            if (isPropias) {
+              capaAAPropias.push(finalizedPolyline);
+              if (!visibilidad.aaPropias) finalizedPolyline.setMap(null);
+            } else {
+              capaAAEnemigo.push(finalizedPolyline);
+              if (!visibilidad.aaEnemigo) finalizedPolyline.setMap(null);
+            }
+            syncLayerCountsUI();
+          }
+        } else if (!isPolyline && currentVertices.length >= 3) {
+          // Polígonos CMOC, Áreas Tácticas o AIN
+          if (activeTool === 'ain') {
+            // Fase 12: Áreas de Interés Nombradas (AIN)
+            const polygonAIN = new google.maps.Polygon({
+              paths: [...currentVertices],
+              strokeColor: '#4CAF50',
+              strokeWeight: 2,
+              strokeOpacity: 0.8,
+              fillColor: '#4CAF50',
+              fillOpacity: 0.4,
+              zIndex: 3,
+              map: visibilidad.ain ? map : null
+            });
+
+            // a) Guardar polígono en capaAIN
+            capaAIN.push(polygonAIN);
+            overlaysStack.push(polygonAIN);
+
+            // b) Calcular centro del polígono con LatLngBounds
+            const bounds = new google.maps.LatLngBounds();
+            const verticesArray = polygonAIN.getPath().getArray();
+            for (let i = 0; i < verticesArray.length; i++) {
+              bounds.extend(verticesArray[i]);
+            }
+            const centro = bounds.getCenter();
+
+            // c) Marcador transparente con etiqueta "AIN " + contadorAIN
+            const labelMarker = new google.maps.Marker({
+              position: centro,
+              map: visibilidad.ain ? map : null,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 0
+              },
+              label: {
+                text: "AIN " + contadorAIN,
+                color: "#FFFFFF",
+                fontWeight: "bold",
+                fontSize: "12px"
+              },
+              title: "AIN " + contadorAIN
+            });
+
+            // d) Guardar también el marcador (etiqueta) en capaAIN
+            capaAIN.push(labelMarker);
+            overlaysStack.push(labelMarker);
+
+            // e) Incrementar contador
+            contadorAIN++;
+            syncLayerCountsUI();
+          } else {
+            let stroke = '#FFC107';
+            let fill = '#FFC107';
+            let targetCapa = capaRestringido;
+            let visKey = 'restringido';
+
+            if (activeTool === 'cmoc_severo') {
+              stroke = '#F44336';
+              fill = '#F44336';
+              targetCapa = capaSevero;
+              visKey = 'severo';
+            } else if (activeTool === 'area_empeno') {
+              stroke = '#FF9800';
+              fill = '#FF9800';
+              targetCapa = capaAE;
+              visKey = 'areaEmpeno';
+            } else if (activeTool === 'terreno_defendible') {
+              stroke = '#2196F3';
+              fill = '#2196F3';
+              targetCapa = capaDefendible;
+              visKey = 'terrenoDefendible';
+            }
+
+            const finalizedPolygon = new google.maps.Polygon({
+              paths: [...currentVertices],
+              strokeColor: stroke,
+              strokeWeight: 2,
+              strokeOpacity: 0.8,
+              fillColor: fill,
+              fillOpacity: 0.4,
+              zIndex: 2,
+              map: map
+            });
+
+            overlaysStack.push(finalizedPolygon);
+            targetCapa.push(finalizedPolygon);
+            if (!visibilidad[visKey]) finalizedPolygon.setMap(null);
+            syncLayerCountsUI();
+          }
+        }
+
+        deactivateAll();
+      }
+
+      // Eventos sobre el mapa
+      map.addListener('click', (e) => {
+        if (!e.latLng) return;
+
+        // Modo Orografía (Cota de altitud)
+        if (modoOrografia) {
+          elevator.getElevationForLocations({ locations: [e.latLng] }, (results, status) => {
+            if (status === 'OK' && results && results[0]) {
+              const altitud = Math.round(results[0].elevation);
+              const lat = e.latLng.lat().toFixed(4);
+              const lng = e.latLng.lng().toFixed(4);
+
+              infoWindow.setContent(`
+                <div style="font-family:'Courier New',monospace; font-size:12px; color:#1b241c; padding:4px;">
+                  <strong style="color:#2e7d32;">COTA DE ALTITUD:</strong> ${altitud} m<br/>
+                  <span style="font-size:10px; color:#556;">COORD: ${lat}, ${lng}</span>
+                </div>
+              `);
+              infoWindow.setPosition(e.latLng);
+              infoWindow.open(map);
+
+              const readout = document.getElementById('orografia-readout');
+              if (readout) {
+                readout.style.display = 'block';
+                readout.innerHTML = `
+                  <div style="color:#81c784; font-weight:bold; margin-bottom:2px;">ÚLTIMA COTA REGISTRADA</div>
+                  <div>ALTITUD: <strong style="color:#fff;">${altitud} Metros</strong></div>
+                  <div>COORD: ${lat}, ${lng}</div>
+                `;
+              }
+            }
+          });
+          return;
+        }
+
+        // Modo Terreno Clave
+        if (modoClave) {
+          const marker = new google.maps.Marker({
+            position: e.latLng,
+            map: map,
+            icon: {
+              url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                  <circle cx="16" cy="16" r="14" stroke="purple" stroke-width="2" fill="none" />
+                  <text x="16" y="21.5" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="purple" text-anchor="middle">C</text>
+                </svg>
+              `)}`,
+              scaledSize: new google.maps.Size(32, 32),
+              anchor: new google.maps.Point(16, 16)
+            },
+            title: 'Terreno Clave'
+          });
+
+          overlaysStack.push(marker);
+          capaClave.push(marker);
+          if (!visibilidad.clave) marker.setMap(null);
+          syncLayerCountsUI();
+          deactivateAll();
+          return;
+        }
+
+        // Modo Blancos de Alto Valor (BAV)
+        if (modoBAV) {
+          const selectBAV = document.getElementById('select-bav');
+          const tipoBav = selectBAV ? selectBAV.value : 'c4';
+          const iconUri = getBAVSymbolDataUri(tipoBav);
+
+          const markerBav = new google.maps.Marker({
+            position: e.latLng,
+            map: map,
+            icon: {
+              url: iconUri,
+              scaledSize: new google.maps.Size(30, 30),
+              anchor: new google.maps.Point(15, 15)
+            },
+            title: `Blanco de Alto Valor: ${tipoBav.toUpperCase()}`
+          });
+
+          // Fase 10: Click en el marcador abre el panel CARVER
+          markerBav.addListener('click', () => {
+            const panel = document.getElementById('panelCarver');
+            if (panel) {
+              panel.style.display = 'block';
+              panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          });
+
+          overlaysStack.push(markerBav);
+          capaBAV.push(markerBav);
+          if (!visibilidad.bav) markerBav.setMap(null);
+          syncLayerCountsUI();
+
+          modoBAV = false;
+          map.setOptions({ draggableCursor: null });
+          document.getElementById('btn-bav')?.classList.remove('active-bav');
+          const bavInst = document.getElementById('bav-instructions');
+          if (bavInst) bavInst.style.display = 'none';
+          return;
+        }
+
+        // Modo Dibujo de Polígonos y Polilíneas
+        if (!activeTool) return;
+        const pt = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+        currentVertices.push(pt);
+        updateDrawingHelper();
+
+        const isPolyline = activeTool === 'aa_propias' || activeTool === 'aa_enemigo' || activeTool === 'medir_ruta';
+
+        if (isPolyline) {
+          const color = activeTool === 'medir_ruta' ? '#FFFF00' : (activeTool === 'aa_propias' ? '#2196F3' : '#F44336');
+          if (!previewPolyline && currentVertices.length >= 2) {
+            previewPolyline = new google.maps.Polyline({
+              path: currentVertices,
+              strokeColor: color,
+              strokeWeight: 4,
+              strokeOpacity: 0.8,
+              clickable: false,
+              map: map
+            });
+          } else if (previewPolyline) {
+            previewPolyline.setPath(currentVertices);
+          }
+        } else {
+          let stroke = '#FFC107';
+          if (activeTool === 'cmoc_severo') stroke = '#F44336';
+          else if (activeTool === 'area_empeno') stroke = '#FF9800';
+          else if (activeTool === 'terreno_defendible') stroke = '#2196F3';
+          else if (activeTool === 'ain') stroke = '#4CAF50';
+
+          if (!previewPolygon && currentVertices.length >= 2) {
+            previewPolygon = new google.maps.Polygon({
+              paths: currentVertices,
+              strokeColor: stroke,
+              strokeWeight: 2,
+              fillColor: stroke,
+              fillOpacity: 0.4,
+              clickable: false,
+              map: map
+            });
+          } else if (previewPolygon) {
+            previewPolygon.setPath(currentVertices);
+          }
+        }
+      });
+
+      // Doble clic para finalizar trazo
+      map.addListener('dblclick', (e) => {
+        if (e && e.stop) e.stop();
+        if (activeTool) finishCurrentDrawing();
+      });
+
+      // Botones de herramientas
+      function bindToolBtn(id, toolName, activeClass) {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+          if (activeTool === toolName) {
+            deactivateAll();
+            return;
+          }
+          deactivateAll();
+          activeTool = toolName;
+          btn.classList.add(activeClass);
+          map.setOptions({ draggableCursor: 'crosshair', disableDoubleClickZoom: true });
+          updateDrawingHelper();
+        });
+      }
+
+      bindToolBtn('btn-restringido', 'cmoc_restringido', 'active-restringido');
+      bindToolBtn('btn-severo', 'cmoc_severo', 'active-severo');
+      bindToolBtn('btn-aa-propias', 'aa_propias', 'active-propias');
+      bindToolBtn('btn-aa-enemigo', 'aa_enemigo', 'active-enemigo');
+      bindToolBtn('btn-area-empeno', 'area_empeno', 'active-empeno');
+      bindToolBtn('btn-terreno-defendible', 'terreno_defendible', 'active-defendible');
+      bindToolBtn('btn-trazar-ain', 'ain', 'active-ain');
+
+      // Botón Terreno Clave
+      const btnClave = document.getElementById('btn-terreno-clave');
+      if (btnClave) {
+        btnClave.addEventListener('click', () => {
+          if (modoClave) {
+            deactivateAll();
+            return;
+          }
+          deactivateAll();
+          modoClave = true;
+          activeTool = 'terreno_clave';
+          btnClave.classList.add('active-clave');
+          map.setOptions({ draggableCursor: 'crosshair' });
+          const inst = document.getElementById('clave-instructions');
+          if (inst) inst.style.display = 'block';
+        });
+      }
+
+      // Botón Blancos de Alto Valor (BAV)
+      const btnBav = document.getElementById('btn-bav');
+      if (btnBav) {
+        btnBav.addEventListener('click', () => {
+          if (modoBAV) {
+            deactivateAll();
+            return;
+          }
+          deactivateAll();
+          modoBAV = true;
+          activeTool = 'bav';
+          btnBav.classList.add('active-bav');
+          map.setOptions({ draggableCursor: 'crosshair' });
+          const inst = document.getElementById('bav-instructions');
+          if (inst) inst.style.display = 'block';
+        });
+      }
+
+      // Botón Orografía
+      const btnOrografia = document.getElementById('btn-orografia');
+      if (btnOrografia) {
+        btnOrografia.addEventListener('click', () => {
+          if (modoOrografia) {
+            deactivateAll();
+            return;
+          }
+          deactivateAll();
+          modoOrografia = true;
+          activeTool = 'orografia';
+          btnOrografia.classList.add('active-orografia');
+          map.setOptions({ draggableCursor: 'crosshair' });
+          const inst = document.getElementById('orografia-instructions');
+          if (inst) inst.style.display = 'block';
+        });
+      }
+
+      // Botón Medir Ruta (Regla)
+      const btnRegla = document.getElementById('btn-medir-ruta');
+      if (btnRegla) {
+        btnRegla.addEventListener('click', () => {
+          if (activeTool === 'medir_ruta') {
+            deactivateAll();
+            return;
+          }
+          deactivateAll();
+          activeTool = 'medir_ruta';
+          reglaActiva = true;
+          btnRegla.classList.add('active-regla');
+          map.setOptions({ draggableCursor: 'crosshair', disableDoubleClickZoom: true });
+          const inst = document.getElementById('regla-instructions');
+          if (inst) inst.style.display = 'block';
+          updateDrawingHelper();
+        });
+      }
+
+      // Finalizar / Cancelar desde el helper
+      document.getElementById('btn-finish-drawing')?.addEventListener('click', finishCurrentDrawing);
+      document.getElementById('btn-cancel-drawing')?.addEventListener('click', deactivateAll);
+
+      // Eliminar último calco
+      document.getElementById('btn-eliminar')?.addEventListener('click', () => {
+        if (overlaysStack.length === 0) return;
+        const last = overlaysStack.pop();
+        if (last && typeof last.setMap === 'function') last.setMap(null);
+
+        function filterArray(arr) {
+          const idx = arr.indexOf(last);
+          if (idx !== -1) arr.splice(idx, 1);
+        }
+
+        filterArray(capaRestringido);
+        filterArray(capaSevero);
+        filterArray(capaClave);
+        filterArray(capaAAPropias);
+        filterArray(capaAAEnemigo);
+        filterArray(capaAE);
+        filterArray(capaDefendible);
+        filterArray(capaAIN);
+        filterArray(capaBAV);
+
+        syncLayerCountsUI();
+      });
+
+      // Checkboxes de visibilidad de capas
+      function setupCheckbox(id, capaKey, arr) {
+        const chk = document.getElementById(id);
+        if (!chk) return;
+        chk.addEventListener('change', (e) => {
+          const isChecked = e.target.checked;
+          visibilidad[capaKey] = isChecked;
+          for (let i = 0; i < arr.length; i++) {
+            if (arr[i] && typeof arr[i].setMap === 'function') {
+              arr[i].setMap(isChecked ? map : null);
+            }
+          }
+        });
+      }
+
+      setupCheckbox('chk-restringido', 'restringido', capaRestringido);
+      setupCheckbox('chk-severo', 'severo', capaSevero);
+      setupCheckbox('chk-clave', 'clave', capaClave);
+      setupCheckbox('chk-aa-propias', 'aaPropias', capaAAPropias);
+      setupCheckbox('chk-aa-enemigo', 'aaEnemigo', capaAAEnemigo);
+      setupCheckbox('chk-area-empeno', 'areaEmpeno', capaAE);
+      setupCheckbox('chk-terreno-defendible', 'terrenoDefendible', capaDefendible);
+      setupCheckbox('chk-ain', 'ain', capaAIN);
+      setupCheckbox('chk-bav', 'bav', capaBAV);
+
+      // Fase 10: Lógica de la Calculadora CARVER
+      const btnCalcularCarver = document.getElementById('btn-calcular-carver');
+      if (btnCalcularCarver) {
+        btnCalcularCarver.addEventListener('click', () => {
+          const valC = parseInt(document.getElementById('select-carver-c')?.value || '1', 10);
+          const valA = parseInt(document.getElementById('select-carver-a')?.value || '1', 10);
+          const valR = parseInt(document.getElementById('select-carver-r')?.value || '1', 10);
+          const valV = parseInt(document.getElementById('select-carver-v')?.value || '1', 10);
+          const valE = parseInt(document.getElementById('select-carver-e')?.value || '1', 10);
+          const valRec = parseInt(document.getElementById('select-carver-rec')?.value || '1', 10);
+
+          const suma = valC + valA + valR + valV + valE + valRec;
+          const porcentaje = ((suma * 100) / 30).toFixed(2);
+          const esPrioritario = parseFloat(porcentaje) >= 70;
+
+          const resDiv = document.getElementById('resultadoCarver');
+          if (resDiv) {
+            resDiv.innerHTML = `
+              <div style="font-weight: bold; margin-bottom: 6px; font-size: 12px; color: #e2ede1;">
+                Puntaje: ${suma}/30 | Valor Relativo: ${porcentaje}%
+              </div>
+              ${
+                esPrioritario
+                  ? `<p style="color: #ff5252; font-weight: bold; font-size: 11px; background-color: rgba(211, 47, 47, 0.18); border: 1px solid rgba(211, 47, 47, 0.4); padding: 6px 8px; border-radius: 3px; margin: 0; text-transform: uppercase;">ESTADO: BLANCO PRIORITARIO</p>`
+                  : `<p style="color: #81c784; font-weight: bold; font-size: 11px; background-color: rgba(129, 199, 132, 0.12); border: 1px solid rgba(129, 199, 132, 0.3); padding: 6px 8px; border-radius: 3px; margin: 0;">ESTADO: Blanco Secundario</p>`
+              }
+            `;
+          }
+        });
+      }
+
+      const btnCloseCarver = document.getElementById('btn-close-carver');
+      if (btnCloseCarver) {
+        btnCloseCarver.addEventListener('click', () => {
+          const panel = document.getElementById('panelCarver');
+          if (panel) panel.style.display = 'none';
+        });
+      }
+
+      // Fase 11: Lógica de Semaforización de celdas CC.MM.
+      // Secuencia exacta: 0 (default / transparente) -> 1 (#4CAF50 - Favorable) -> 2 (#FFC107 - Marginal) -> 3 (#F44336 - Desfavorable) -> 0
+      const celdasCCMM = document.querySelectorAll('.celda-ccmm');
+      celdasCCMM.forEach((celda) => {
+        celda.dataset.estado = '0';
+        celda.addEventListener('click', function () {
+          let estado = parseInt(this.dataset.estado || '0', 10);
+          estado = (estado + 1) % 4;
+          this.dataset.estado = estado.toString();
+
+          if (estado === 1) {
+            this.style.backgroundColor = '#4CAF50';
+            this.style.color = '#ffffff';
+            this.innerText = '';
+          } else if (estado === 2) {
+            this.style.backgroundColor = '#FFC107';
+            this.style.color = '#111111';
+            this.innerText = '';
+          } else if (estado === 3) {
+            this.style.backgroundColor = '#F44336';
+            this.style.color = '#ffffff';
+            this.innerText = '';
+          } else {
+            this.style.backgroundColor = 'transparent';
+            this.style.color = '#556655';
+            this.innerText = '-';
+          }
+        });
+      });
+
+      // Botón para limpiar / restablecer matriz CC.MM.
+      const btnResetCcmm = document.getElementById('btn-reset-ccmm');
+      if (btnResetCcmm) {
+        btnResetCcmm.addEventListener('click', () => {
+          celdasCCMM.forEach((celda) => {
+            celda.dataset.estado = '0';
+            celda.style.backgroundColor = 'transparent';
+            celda.style.color = '#556655';
+            celda.innerText = '-';
+          });
+        });
+      }
+    }
+
+    // Inyección asíncrona de la API de Google Maps con libraries=drawing,geometry
+    window.initTacticalMap = initMap;
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async&libraries=drawing,geometry&callback=initTacticalMap`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>
